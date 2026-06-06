@@ -16,13 +16,35 @@ const KEY_EXPLICIT = ["k", "explicit"].join("-");
 
 describe("Provider presets", () => {
   it("includes the known providers", () => {
-    for (const p of ["mimo", "openai", "openrouter", "ollama"]) {
+    for (const p of ["mimo", "openai", "openrouter", "ollama", "groq", "deepseek", "together", "mistral"]) {
       expect(PROVIDER_PRESETS[p]).toBeDefined();
     }
   });
 
   it("defaults to mimo", () => {
     expect(DEFAULT_PROVIDER).toBe("mimo");
+  });
+
+  it("groq preset is correct", () => {
+    expect(PROVIDER_PRESETS["groq"].baseUrl).toContain("api.groq.com");
+    expect(PROVIDER_PRESETS["groq"].authStyle).toBe("bearer");
+    expect(PROVIDER_PRESETS["groq"].model).toBe("llama-3.3-70b-versatile");
+  });
+
+  it("deepseek preset is correct", () => {
+    expect(PROVIDER_PRESETS["deepseek"].baseUrl).toContain("api.deepseek.com");
+    expect(PROVIDER_PRESETS["deepseek"].authStyle).toBe("bearer");
+    expect(PROVIDER_PRESETS["deepseek"].model).toBe("deepseek-chat");
+  });
+
+  it("together preset is correct", () => {
+    expect(PROVIDER_PRESETS["together"].baseUrl).toContain("api.together.xyz");
+    expect(PROVIDER_PRESETS["together"].authStyle).toBe("bearer");
+  });
+
+  it("mistral preset is correct", () => {
+    expect(PROVIDER_PRESETS["mistral"].baseUrl).toContain("api.mistral.ai");
+    expect(PROVIDER_PRESETS["mistral"].authStyle).toBe("bearer");
   });
 });
 

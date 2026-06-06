@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "LearnPath — Adaptive Learning Platform",
-  description: "AI-powered adaptive learning with MiMo V2.5 Pro",
+  description: "AI-powered adaptive learning with any OpenAI-compatible LLM",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

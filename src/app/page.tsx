@@ -14,7 +14,7 @@ export default function Home() {
     <main className="min-h-screen p-8 max-w-4xl mx-auto">
       <div className="text-center mb-12">
         <h1 className="text-4xl font-bold mb-2">🎓 LearnPath</h1>
-        <p className="text-lg text-gray-600">Adaptive Learning Platform powered by Xiaomi MiMo V2.5 Pro</p>
+        <p className="text-lg text-gray-600">Adaptive Learning Platform for any OpenAI-compatible LLM</p>
         <p className="text-sm text-gray-400 mt-1">AI-driven quizzes, flashcards, and personalized roadmaps</p>
       </div>
 
@@ -31,7 +31,7 @@ export default function Home() {
       </div>
 
       <div className="mt-12 text-center text-sm text-gray-400">
-        <p>Powered by Xiaomi MiMo V2.5 Pro • API: token-plan-sgp.xiaomimimo.com/v1</p>
+        <p>Provider-agnostic • Runs on OpenAI, OpenRouter, Ollama, MiMo, or any compatible endpoint</p>
       </div>
     </main>
   );

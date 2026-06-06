@@ -2,7 +2,7 @@
   "name": "learnpath",
   "version": "1.0.0",
   "private": true,
-  "description": "Adaptive Learning Platform powered by Xiaomi MiMo V2.5 Pro",
+  "description": "Adaptive Learning Platform for any OpenAI-compatible LLM",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

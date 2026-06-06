@@ -1,8 +1,16 @@
 # 🎓 LearnPath
 
-**Adaptive Learning Platform powered by Xiaomi MiMo V2.5 Pro**
+**Adaptive Learning Platform for any OpenAI-compatible LLM**
 
 > AI-driven personalized education — quizzes, flashcards, learning roadmaps, progress tracking, and concept mapping.
+
+[![Next.js 14](https://img.shields.io/badge/Next.js-14-black.svg)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.4-blue.svg)](https://www.typescriptlang.org/)
+[![CI](https://github.com/aimanmalib/learnpath/actions/workflows/ci.yml/badge.svg)](https://github.com/aimanmalib/learnpath/actions/workflows/ci.yml)
+[![Tests: 116](https://img.shields.io/badge/tests-116-brightgreen.svg)](tests/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
+Works with **OpenAI, OpenRouter, Ollama, llama.cpp, Xiaomi MiMo**, or any endpoint that speaks the OpenAI `/chat/completions` protocol. Pick a provider with one env var — no code changes.
 
 ---
 
@@ -23,7 +31,7 @@
 │  └────────────────────┬───────────────────┘             │
 │                       │                                  │
 │  ┌────────────────────▼───────────────────┐             │
-│  │           Custom Hooks (useMiMo)        │             │
+│  │         Custom Hooks (useMiMo)        │             │
 │  │     SSE streaming │ token tracking      │             │
 │  └────────────────────┬───────────────────┘             │
 │                       │                                  │
@@ -34,8 +42,8 @@
 │  └────────────────────┬───────────────────┘             │
 │                       │                                  │
 │  ═══════════════════════════════════════════             │
-│  Xiaomi MiMo V2.5 Pro API                               │
-│  token-plan-sgp.xiaomimimo.com/v1                       │
+│  Any OpenAI-compatible /chat/completions endpoint        │
+│  (OpenAI · OpenRouter · Ollama · MiMo · ...)             │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -48,27 +56,22 @@
 | **Learning Roadmap** | Personalized learning paths by topic/level | 0.5M |
 | **Progress Tracker** | Visual analytics dashboard | 0.3M |
 | **Concept Map** | Knowledge graph exploration | 0.5M |
-| **AI Chat** | Streaming MiMo conversation | 0.8M |
+| **AI Chat** | Streaming LLM conversation | 0.8M |
 
 **Daily Total: ~3.1M tokens**
 
-## Token Consumption Report
+## Supported Providers
 
-| Metric | Value |
-|--------|-------|
-| Daily token consumption | ~3.1M tokens |
-| Per-session (avg quiz) | ~8K tokens |
-| Primary model | mimo-v2.5-pro |
-| API endpoint | `token-plan-sgp.xiaomimimo.com/v1` |
-| Auth method | `api-key` header |
+LearnPath talks to any OpenAI-compatible `/chat/completions` endpoint. Built-in presets:
 
-## Why MiMo?
+| Provider | `LLM_PROVIDER` | Default model | Auth | Key env var |
+|----------|----------------|---------------|------|-------------|
+| OpenAI | `openai` | `gpt-4o-mini` | Bearer | `OPENAI_API_KEY` |
+| OpenRouter | `openrouter` | `openai/gpt-4o-mini` | Bearer | `OPENROUTER_API_KEY` |
+| Ollama (local) | `ollama` | `llama3.1` | Bearer | `OLLAMA_BASE_URL` |
+| Xiaomi MiMo | `mimo` | `mimo-v2.5-pro` | api-key | `MIMO_API_KEY` |
 
-1. **Structured output** — MiMo excels at generating consistently formatted JSON for quizzes, flashcards, and roadmaps
-2. **SSE streaming** — Real-time token-by-token responses via `reasoning_content` field for interactive learning
-3. **Cost efficiency** — High-volume token consumption across 6 features requires affordable per-token pricing
-4. **Reasoning depth** — Chain-of-thought reasoning enables detailed explanations in quiz answers
-5. **API compatibility** — OpenAI-compatible endpoint simplifies Next.js integration
+Set `LLM_PROVIDER` + the matching key (or just `LLM_API_KEY`). Override `LLM_BASE_URL` / `LLM_MODEL` for any other compatible endpoint. The right auth header (bearer vs api-key) is chosen automatically. Quiz answers and chat responses surface a model's `reasoning_content` when available, but it isn't required.
 
 ## Quick Start
 
@@ -76,9 +79,9 @@
 # Install dependencies
 npm install
 
-# Set environment variables
-export MIMO_API_KEY="your-key-here"
-
+# Set environment — pick any provider (OpenAI shown here)
+echo 'LLM_PROVIDER=openai' > .env.local
+echo 'OPENAI_API_KEY=*** development
 # Development
 npm run dev
 
@@ -98,12 +101,12 @@ npm test
 - SM-2 algorithm (spaced repetition)
 - Vitest (testing)
 
-## API Details
+## LLM Backend
 
-- **Endpoint**: `https://token-plan-sgp.xiaomimimo.com/v1/chat/completions`
-- **Model**: `mimo-v2.5-pro`
-- **Auth**: `api-key` header (NOT `Authorization: Bearer`)
-- **Streaming**: SSE with `reasoning_content` field
+- **Protocol**: OpenAI-compatible `/chat/completions`
+- **Providers**: OpenAI, OpenRouter, Ollama, llama.cpp, Xiaomi MiMo, or any compatible endpoint
+- **Auth**: bearer token or `api-key` header, selected automatically per provider
+- **Config**: set `LLM_PROVIDER` + the provider's API key env var
 
 ## License
 

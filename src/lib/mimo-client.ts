@@ -1,8 +1,16 @@
 /**
- * MiMo API Client for LearnPath
+ * OpenAI-compatible LLM client for LearnPath.
  *
- * CRITICAL: Uses 'api-key' header — NOT 'Authorization: Bearer'
- * Endpoint: https://token-plan-sgp.xiaomimimo.com/v1/chat/completions
+ * Works with any provider that speaks the OpenAI `/chat/completions` protocol
+ * (OpenAI, OpenRouter, Ollama, llama.cpp, Xiaomi MiMo Token Plan, ...). The auth
+ * header style (bearer vs api-key) is chosen automatically from the selected
+ * provider preset.
+ *
+ * Configure with env vars:
+ *   LLM_PROVIDER   one of: openai | openrouter | ollama | mimo   (default: mimo)
+ *   LLM_API_KEY    API key (legacy MIMO_API_KEY still honored)
+ *   LLM_BASE_URL   override the provider base URL (optional)
+ *   LLM_MODEL      override the default model (optional)
  */
 
 export interface MiMoMessage {
@@ -28,30 +36,83 @@ export interface MiMoStreamChunk {
   finish_reason?: string;
 }
 
-const DEFAULT_BASE_URL = "https://token-plan-sgp.xiaomimimo.com/v1";
-const DEFAULT_MODEL = "mimo-v2.5-pro";
+export type AuthStyle = "bearer" | "api-key";
+
+export interface ProviderPreset {
+  baseUrl: string;
+  authStyle: AuthStyle;
+  model: string;
+  envKey: string;
+  envBase: string;
+}
+
+export const PROVIDER_PRESETS: Record<string, ProviderPreset> = {
+  mimo: {
+    baseUrl: "https://token-plan-sgp.xiaomimimo.com/v1",
+    authStyle: "api-key",
+    model: "mimo-v2.5-pro",
+    envKey: "MIMO_API_KEY",
+    envBase: "MIMO_BASE_URL",
+  },
+  openai: {
+    baseUrl: "https://api.openai.com/v1",
+    authStyle: "bearer",
+    model: "gpt-4o-mini",
+    envKey: "OPENAI_API_KEY",
+    envBase: "OPENAI_BASE_URL",
+  },
+  openrouter: {
+    baseUrl: "https://openrouter.ai/api/v1",
+    authStyle: "bearer",
+    model: "openai/gpt-4o-mini",
+    envKey: "OPENROUTER_API_KEY",
+    envBase: "OPENROUTER_BASE_URL",
+  },
+  ollama: {
+    baseUrl: "http://localhost:11434/v1",
+    authStyle: "bearer",
+    model: "llama3.1",
+    envKey: "OLLAMA_API_KEY",
+    envBase: "OLLAMA_BASE_URL",
+  },
+};
+
+export const DEFAULT_PROVIDER = "mimo";
+
+const DEFAULT_BASE_URL = PROVIDER_PRESETS[DEFAULT_PROVIDER].baseUrl;
+const DEFAULT_MODEL = PROVIDER_PRESETS[DEFAULT_PROVIDER].model;
 
 export class MiMoClient {
   private apiKey: string;
   private baseUrl: string;
   private model: string;
+  private authStyle: AuthStyle;
 
+  /**
+   * Backward-compatible positional constructor. The optional 4th/5th args add
+   * provider/auth-style control; defaults preserve the original MiMo behavior.
+   */
   constructor(
     apiKey: string = process.env.MIMO_API_KEY || "",
     baseUrl: string = process.env.MIMO_BASE_URL || DEFAULT_BASE_URL,
     model: string = process.env.MIMO_MODEL || DEFAULT_MODEL,
+    authStyle: AuthStyle = "api-key",
   ) {
     this.apiKey = apiKey;
     this.baseUrl = baseUrl.replace(/\/$/, "");
     this.model = model;
+    this.authStyle = authStyle;
   }
 
-  /** Build headers — uses 'api-key' header, NOT Authorization: Bearer */
+  /** Build headers — bearer or api-key depending on the provider. */
   private getHeaders(): Record<string, string> {
-    return {
-      "api-key": this.apiKey,
-      "Content-Type": "application/json",
-    };
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (this.authStyle === "bearer") {
+      headers["Authorization"] = `Bearer ${this.apiKey}`;
+    } else {
+      headers["api-key"] = this.apiKey;
+    }
+    return headers;
   }
 
   /** Non-streaming chat completion */
@@ -77,7 +138,7 @@ export class MiMoClient {
     });
 
     if (!response.ok) {
-      throw new Error(`MiMo API error: ${response.status} ${response.statusText}`);
+      throw new Error(`LLM API error: ${response.status} ${response.statusText}`);
     }
 
     const data = await response.json();
@@ -115,7 +176,7 @@ export class MiMoClient {
     });
 
     if (!response.ok || !response.body) {
-      throw new Error(`MiMo stream error: ${response.status}`);
+      throw new Error(`LLM stream error: ${response.status}`);
     }
 
     const reader = response.body.getReader();
@@ -155,6 +216,26 @@ export class MiMoClient {
   }
 }
 
+/**
+ * Create a client from environment variables, resolving the active provider
+ * preset. Honors LLM_PROVIDER + provider-specific keys, with legacy MIMO_*
+ * env vars as a fallback so existing deployments keep working.
+ */
 export function createMiMoClient(): MiMoClient {
-  return new MiMoClient();
+  const provider = process.env.LLM_PROVIDER || DEFAULT_PROVIDER;
+  const preset = PROVIDER_PRESETS[provider] || PROVIDER_PRESETS[DEFAULT_PROVIDER];
+
+  const apiKey =
+    process.env.LLM_API_KEY ||
+    process.env[preset.envKey] ||
+    process.env.MIMO_API_KEY ||
+    "";
+  const baseUrl =
+    process.env.LLM_BASE_URL ||
+    process.env[preset.envBase] ||
+    process.env.MIMO_BASE_URL ||
+    preset.baseUrl;
+  const model = process.env.LLM_MODEL || process.env.MIMO_MODEL || preset.model;
+
+  return new MiMoClient(apiKey, baseUrl, model, preset.authStyle);
 }

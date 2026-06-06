@@ -47,7 +47,7 @@ describe("MiMoClient", () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, status: 500, statusText: "Internal" }));
     await expect(
       client.chatCompletion([{ role: "user", content: "Hi" }]),
-    ).rejects.toThrow("MiMo API error");
+    ).rejects.toThrow("LLM API error");
     vi.restoreAllMocks();
   });
 

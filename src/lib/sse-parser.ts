@@ -1,6 +1,6 @@
 /**
  * SSE (Server-Sent Events) stream parser for MiMo API responses.
- * Handles the 'reasoning_content' field specific to MiMo V2.5 Pro.
+ * Handles the 'reasoning_content' field (used by some providers for chain-of-thought).
  */
 
 export interface SSEEvent {

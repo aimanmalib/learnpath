@@ -1,6 +1,6 @@
-# 🎓 LearnPath
+# LearnPath
 
-**Adaptive learning with any OpenAI-compatible LLM**
+**Quizzes, flashcards and learning roadmaps from any OpenAI-compatible LLM, in English and Bahasa Melayu**
 
 > AI-generated quizzes, flashcards and learning roadmaps, with spaced repetition and a simple progress view. In English and Bahasa Melayu.
 
@@ -11,6 +11,19 @@
 
 **[Live demo →](https://learnpath-nine.vercel.app)** (bring your own API key: open **Settings**, pick a provider and paste a key)
 
+<table>
+  <tr>
+    <td width="60%"><img src="docs/screenshots/home-bm-light.png" alt="LearnPath home page in Bahasa Melayu, light theme"></td>
+    <td width="40%"><img src="docs/screenshots/quiz-bm-iphone.png" alt="A quiz question in Bahasa Melayu on iPhone"></td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/roadmap-en-dark.png" alt="A five-step learning roadmap in English, dark theme"></td>
+    <td><img src="docs/screenshots/flashcard-bm-iphone-dark.png" alt="A flashcard answer in Bahasa Melayu on iPhone, dark theme"></td>
+  </tr>
+</table>
+<sub>Screenshots taken in Safari/WebKit (desktop and iPhone 13). The quiz, roadmap and flashcard text is real model output.</sub>
+
+
 Every AI feature goes through one provider layer (`src/lib/llm/`) that speaks the OpenAI `/chat/completions` protocol. Choose a built-in provider in the browser, or configure the server once with environment variables when you host it yourself.
 
 ---
@@ -19,7 +32,7 @@ Every AI feature goes through one provider layer (`src/lib/llm/`) that speaks th
 
 | Feature | What it does |
 |---------|--------------|
-| **Adaptive Quiz** | Generates multiple-choice questions for any topic at easy / medium / hard difficulty |
+| **Quiz** | Generates multiple-choice questions for any topic at the difficulty you choose (easy / medium / hard), with an explanation after each answer |
 | **Flashcards** | Generates cards for a topic and schedules reviews with the SM-2 spaced-repetition algorithm |
 | **Learning Roadmap** | Builds a step-by-step plan for a topic at beginner / intermediate / advanced level |
 | **Progress Tracker** | Shows the sessions, scores and token usage from your current visit (kept in memory, not saved) |

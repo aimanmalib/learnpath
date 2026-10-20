@@ -1,7 +1,11 @@
 "use client";
 import { useEffect, useId, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { Eye, EyeOff, ExternalLink, Info, ShieldCheck, X } from "lucide-react";
 import { PROVIDERS, getProvider } from "@/lib/llm/providers";
 import { clearSettings, defaultSettings, saveSettings, type LlmSettings } from "@/lib/llm/settings";
+import { useI18n } from "@/i18n/I18nProvider";
+import { errorMessage } from "@/i18n/errors";
 
 export interface ServerInfo {
   mode: "server" | "byo-key";
@@ -13,23 +17,49 @@ export interface ServerInfo {
 }
 
 interface SettingsDialogProps {
+  /** Error code that made the app open this panel (e.g. "missing_key"). */
   reason?: string;
   initial: LlmSettings;
   serverInfo: ServerInfo | null;
   onClose: () => void;
 }
 
-/** Rendered only while open, so the form starts from `initial` every time. */
+/**
+ * Rendered only while open, so the form starts from `initial` every time.
+ * Portalled to <body> so no ancestor's stacking context or filter can trap it.
+ */
 export function SettingsDialog({ reason, initial, serverInfo, onClose }: SettingsDialogProps) {
+  const { t } = useI18n();
   const [draft, setDraft] = useState<LlmSettings>(initial);
   const [showKey, setShowKey] = useState(false);
-  const [notice, setNotice] = useState<string | null>(null);
+  const [notice, setNotice] = useState<"storageBlocked" | "keyForgotten" | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const ids = useId();
 
-  // Escape closes; lock page scroll on <html> while open.
+  // Escape closes, Tab stays inside the panel, page scroll is locked on <html>,
+  // and focus returns to whatever opened the panel.
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    const opener = document.activeElement as HTMLElement | null;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+        return;
+      }
+      if (e.key !== "Tab" || !panelRef.current) return;
+      const focusable = panelRef.current.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      );
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey && (document.activeElement === first || document.activeElement === panelRef.current)) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
     window.addEventListener("keydown", onKey);
     const root = document.documentElement;
     const previous = root.style.overflow;
@@ -38,6 +68,7 @@ export function SettingsDialog({ reason, initial, serverInfo, onClose }: Setting
     return () => {
       window.removeEventListener("keydown", onKey);
       root.style.overflow = previous;
+      opener?.focus?.();
     };
   }, [onClose]);
 
@@ -59,7 +90,7 @@ export function SettingsDialog({ reason, initial, serverInfo, onClose }: Setting
       baseUrl: needsBaseUrl ? draft.baseUrl.trim() : "",
     };
     if (!saveSettings(cleaned)) {
-      setNotice("This browser blocked local storage, so the settings could not be saved (private mode?).");
+      setNotice("storageBlocked");
       return;
     }
     onClose();
@@ -68,12 +99,12 @@ export function SettingsDialog({ reason, initial, serverInfo, onClose }: Setting
   const forget = () => {
     clearSettings();
     setDraft({ ...draft, apiKey: "" });
-    setNotice("Your key has been removed from this browser.");
+    setNotice("keyForgotten");
   };
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-gray-900/40 sm:items-center sm:p-4"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-[var(--overlay)] sm:items-center sm:p-4"
       onMouseDown={(e) => e.target === e.currentTarget && onClose()}
     >
       <div
@@ -82,61 +113,62 @@ export function SettingsDialog({ reason, initial, serverInfo, onClose }: Setting
         aria-modal="true"
         aria-labelledby={`${ids}-title`}
         tabIndex={-1}
-        className="max-h-[92dvh] w-full overflow-y-auto rounded-t-2xl bg-white p-5 shadow-xl outline-none sm:max-w-lg sm:rounded-xl sm:p-6"
+        className="max-h-[92dvh] w-full overflow-y-auto rounded-t-2xl border border-line bg-surface p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] text-ink shadow-raised outline-none sm:max-w-lg sm:rounded-2xl sm:p-6"
       >
-        <div className="mb-4 flex items-start justify-between gap-4">
+        <div className="mb-5 flex items-start justify-between gap-4">
           <div>
-            <h2 id={`${ids}-title`} className="text-lg font-semibold">
-              AI provider settings
+            <h2 id={`${ids}-title`} className="font-display text-xl font-semibold">
+              {t("settings.title")}
             </h2>
-            <p className="mt-0.5 text-sm text-gray-500">Bring your own API key to use the AI features.</p>
+            <p className="mt-1 text-sm text-ink-muted">{t("settings.subtitle")}</p>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close settings"
-            className="-mr-1 rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-          >
-            <svg viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5" aria-hidden="true">
-              <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
-            </svg>
+          <button type="button" onClick={onClose} aria-label={t("settings.closeLabel")} className="btn btn-ghost btn-sm -mr-1.5 h-9 w-9 p-0">
+            <X className="h-5 w-5" aria-hidden="true" />
           </button>
         </div>
 
         {reason && !serverMode && (
-          <p className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">{reason}</p>
+          <p className="mb-4 flex gap-2 rounded-xl border border-accent/30 bg-warning-soft px-3 py-2.5 text-sm text-warning-ink">
+            <Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+            {errorMessage(t, reason)}
+          </p>
         )}
 
         {serverMode ? (
           <div className="space-y-4">
-            <p className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-800">
-              This server has its own API key configured
-              {serverInfo?.providerLabel ? ` (${serverInfo.providerLabel}${serverInfo.model ? `, ${serverInfo.model}` : ""})` : ""}.
-              There is nothing to set up here.
+            <p className="flex gap-2 rounded-xl border border-brand/30 bg-brand-soft px-3 py-2.5 text-sm text-brand-ink">
+              <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+              <span>
+                {t("settings.serverMode", {
+                  detail: serverInfo?.providerLabel
+                    ? ` (${serverInfo.providerLabel}${serverInfo.model ? `, ${serverInfo.model}` : ""})`
+                    : "",
+                })}
+              </span>
             </p>
             <div className="flex justify-end">
-              <button type="button" onClick={onClose} className="rounded-lg bg-blue-500 px-4 py-2 text-white hover:bg-blue-600">
-                Done
+              <button type="button" onClick={onClose} className="btn btn-primary">
+                {t("common.done")}
               </button>
             </div>
           </div>
         ) : (
           <form
-            className="space-y-4"
+            className="space-y-5"
             onSubmit={(e) => {
               e.preventDefault();
               save();
             }}
           >
             <div>
-              <label htmlFor={`${ids}-provider`} className="mb-1 block text-sm font-medium text-gray-700">
-                Provider
+              <label htmlFor={`${ids}-provider`} className="label">
+                {t("settings.provider")}
               </label>
               <select
                 id={`${ids}-provider`}
                 value={preset.id}
                 onChange={(e) => changeProvider(e.target.value)}
-                className="w-full rounded-lg border bg-white px-3 py-2 text-base"
+                className="field"
               >
                 {PROVIDERS.map((p) => (
                   <option key={p.id} value={p.id} disabled={p.selfHostOnly && !allowSelfHost}>
@@ -144,15 +176,13 @@ export function SettingsDialog({ reason, initial, serverInfo, onClose }: Setting
                   </option>
                 ))}
               </select>
-              {!allowSelfHost && (
-                <p className="mt-1 text-xs text-gray-500">Self-hosted options need your own copy of LearnPath.</p>
-              )}
+              {!allowSelfHost && <p className="mt-1.5 text-xs text-ink-subtle">{t("settings.selfHostNote")}</p>}
             </div>
 
             {needsBaseUrl && (
               <div>
-                <label htmlFor={`${ids}-base`} className="mb-1 block text-sm font-medium text-gray-700">
-                  Base URL
+                <label htmlFor={`${ids}-base`} className="label">
+                  {t("settings.baseUrl")}
                 </label>
                 <input
                   id={`${ids}-base`}
@@ -163,41 +193,42 @@ export function SettingsDialog({ reason, initial, serverInfo, onClose }: Setting
                   placeholder={preset.baseUrl || "https://your-server.example/v1"}
                   autoComplete="off"
                   spellCheck={false}
-                  className="w-full rounded-lg border px-3 py-2 text-base"
+                  className="field"
                 />
-                <p className="mt-1 text-xs text-gray-500">
-                  {preset.baseUrl ? `Leave empty to use ${preset.baseUrl}.` : "Any OpenAI-compatible endpoint, ending in /v1."}
+                <p className="mt-1.5 text-xs text-ink-subtle">
+                  {preset.baseUrl ? t("settings.baseUrlDefault", { url: preset.baseUrl }) : t("settings.baseUrlAny")}
                 </p>
               </div>
             )}
 
             <div>
-              <label htmlFor={`${ids}-model`} className="mb-1 block text-sm font-medium text-gray-700">
-                Model
+              <label htmlFor={`${ids}-model`} className="label">
+                {t("settings.model")}
               </label>
               <input
                 id={`${ids}-model`}
                 type="text"
                 value={draft.model}
                 onChange={(e) => setDraft({ ...draft, model: e.target.value })}
-                placeholder={preset.defaultModel || "model name"}
+                placeholder={preset.defaultModel || t("settings.modelPlaceholder")}
                 autoComplete="off"
                 autoCapitalize="off"
                 spellCheck={false}
-                className="w-full rounded-lg border px-3 py-2 font-mono text-base"
+                className="field font-mono"
               />
               {preset.defaultModel && (
-                <p className="mt-1 text-xs text-gray-500">
-                  Default for {preset.label}: <span className="font-mono">{preset.defaultModel}</span>
+                <p className="mt-1.5 text-xs text-ink-subtle">
+                  {t("settings.modelDefault", { provider: preset.label })}{" "}
+                  <span className="font-mono text-ink-muted">{preset.defaultModel}</span>
                   {draft.model.trim() !== preset.defaultModel && (
                     <>
                       {" · "}
                       <button
                         type="button"
-                        className="text-blue-600 underline"
+                        className="font-medium text-brand-ink underline underline-offset-2"
                         onClick={() => setDraft({ ...draft, model: preset.defaultModel })}
                       >
-                        use default
+                        {t("settings.useDefault")}
                       </button>
                     </>
                   )}
@@ -206,8 +237,9 @@ export function SettingsDialog({ reason, initial, serverInfo, onClose }: Setting
             </div>
 
             <div>
-              <label htmlFor={`${ids}-key`} className="mb-1 block text-sm font-medium text-gray-700">
-                API key{!preset.keyRequired && <span className="font-normal text-gray-400"> (optional)</span>}
+              <label htmlFor={`${ids}-key`} className="label">
+                {t("settings.apiKey")}
+                {!preset.keyRequired && <span className="font-normal text-ink-subtle"> {t("settings.optional")}</span>}
               </label>
               <div className="flex gap-2">
                 <input
@@ -215,63 +247,68 @@ export function SettingsDialog({ reason, initial, serverInfo, onClose }: Setting
                   type={showKey ? "text" : "password"}
                   value={draft.apiKey}
                   onChange={(e) => setDraft({ ...draft, apiKey: e.target.value })}
-                  placeholder="Paste your key"
+                  placeholder={t("settings.keyPlaceholder")}
                   autoComplete="off"
                   autoCapitalize="off"
                   spellCheck={false}
-                  className="min-w-0 flex-1 rounded-lg border px-3 py-2 font-mono text-base"
+                  className="field min-w-0 flex-1 font-mono"
                 />
                 <button
                   type="button"
                   onClick={() => setShowKey((v) => !v)}
-                  className="shrink-0 rounded-lg border px-3 text-sm text-gray-600 hover:bg-gray-50"
+                  className="btn btn-secondary shrink-0 px-3"
                   aria-pressed={showKey}
                 >
-                  {showKey ? "Hide" : "Show"}
+                  {showKey ? <EyeOff className="h-4 w-4" aria-hidden="true" /> : <Eye className="h-4 w-4" aria-hidden="true" />}
+                  <span>{showKey ? t("settings.hide") : t("settings.show")}</span>
                 </button>
               </div>
               {preset.keysUrl && (
-                <p className="mt-1 text-xs text-gray-500">
-                  <a href={preset.keysUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">
-                    Get an API key from {preset.label}
+                <p className="mt-1.5 text-xs">
+                  <a
+                    href={preset.keysUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 font-medium text-brand-ink underline underline-offset-2"
+                  >
+                    {t("settings.getKey", { provider: preset.label })}
+                    <ExternalLink className="h-3 w-3" aria-hidden="true" />
                   </a>
                 </p>
               )}
             </div>
 
-            <div className="rounded-lg bg-gray-50 px-3 py-2.5 text-xs leading-relaxed text-gray-600">
-              <p className="mb-1 font-medium text-gray-700">Where your key goes</p>
-              Your key is saved only in this browser. It is sent with each request through this app&apos;s API route to
-              the provider you chose, and is never stored or logged on the server. Use a key with a spending limit, and
-              press &ldquo;Forget key&rdquo; on a shared device.
+            <div className="rounded-xl bg-surface-2 px-4 py-3 text-xs leading-relaxed text-ink-muted">
+              <p className="mb-1 flex items-center gap-1.5 font-semibold text-ink">
+                <ShieldCheck className="h-4 w-4 text-brand-ink" aria-hidden="true" />
+                {t("settings.privacyTitle")}
+              </p>
+              {t("settings.privacyBody")}
             </div>
 
             {notice && (
-              <p role="status" className="text-sm text-gray-700">
-                {notice}
+              <p role="status" className="text-sm text-ink">
+                {t(`settings.${notice}`)}
               </p>
             )}
 
             <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
-              <button
-                type="button"
-                onClick={forget}
-                className="rounded-lg px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
-              >
-                Forget key
+              <button type="button" onClick={forget} className="btn btn-ghost btn-sm text-danger-ink hover:bg-danger-soft hover:text-danger-ink">
+                {t("settings.forget")}
               </button>
               <div className="flex gap-2">
-                <button type="button" onClick={onClose} className="rounded-lg bg-gray-100 px-4 py-2 hover:bg-gray-200">
-                  Cancel
+                <button type="button" onClick={onClose} className="btn btn-secondary">
+                  {t("common.cancel")}
                 </button>
-                <button type="submit" className="rounded-lg bg-blue-500 px-4 py-2 text-white hover:bg-blue-600">
-                  Save
+                <button type="submit" className="btn btn-primary">
+                  {t("common.save")}
                 </button>
               </div>
             </div>
           </form>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

@@ -1,27 +1,56 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
+import { Fraunces, Inter } from "next/font/google";
 import { AppHeader } from "@/components/AppHeader";
+import { MobileNav } from "@/components/MobileNav";
+import { SiteFooter } from "@/components/SiteFooter";
+import { I18nProvider } from "@/i18n/I18nProvider";
+import { translate } from "@/i18n/messages";
+import { getRequestLocale } from "@/i18n/server";
+import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import "./globals.css";
 
-export const metadata: Metadata = {
-  title: "LearnPath — Adaptive Learning",
-  description: "AI-generated quizzes, flashcards and learning roadmaps with any OpenAI-compatible LLM. Bring your own API key.",
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
+const fraunces = Fraunces({
+  subsets: ["latin"],
+  variable: "--font-fraunces",
+  display: "swap",
+  axes: ["opsz", "SOFT"],
+});
+
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getRequestLocale();
+  return {
+    title: translate(locale, "meta.title"),
+    description: translate(locale, "meta.description"),
+  };
+}
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f6f6f2" },
+    { media: "(prefers-color-scheme: dark)", color: "#0d1312" },
+  ],
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const locale = await getRequestLocale();
   return (
-    <html lang="en">
-      <body className="bg-gray-50 text-gray-900 antialiased">
-        <AppHeader />
-        {children}
-        <footer className="mx-auto max-w-4xl px-4 pb-8 pt-4 text-center text-xs text-gray-400 sm:px-8">
-          <a href="https://github.com/aimanmalib/learnpath" className="underline hover:text-gray-600">
-            Source on GitHub
-          </a>
-          {" · "}Built by{" "}
-          <a href="https://sasateguh.com" className="underline hover:text-gray-600">
-            Sasa Teguh
-          </a>
-        </footer>
+    <html lang={locale} className={`${inter.variable} ${fraunces.variable}`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+      </head>
+      <body className="min-h-dvh">
+        <I18nProvider initialLocale={locale}>
+          <AppHeader />
+          <div className="pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0">
+            {children}
+            <SiteFooter />
+          </div>
+          <MobileNav />
+        </I18nProvider>
       </body>
     </html>
   );

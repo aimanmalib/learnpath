@@ -1,19 +1,384 @@
-@import 'tailwindcss';
+@import "tailwindcss";
 
 /*
-  The default border color has changed to `currentcolor` in Tailwind CSS v4,
-  so we've added these compatibility styles to make sure everything still
-  looks the same as it did with Tailwind CSS v3.
+  LearnPath design tokens.
 
-  If we ever want to remove these styles, we need to add an explicit border
-  color utility to any element that depends on these defaults.
+  Every colour in the UI comes from the variables below; components use the
+  Tailwind utilities generated from them (bg-surface, text-ink-muted, ...).
+  Tailwind's default palette is switched off so a stray `text-gray-400`
+  cannot slip in and break dark mode or contrast.
+
+  Text/background pairs are checked for WCAG AA (4.5:1) in both themes.
+  Light is the default; dark applies when the system prefers it (and the
+  visitor has not picked light), or when the visitor picks dark.
 */
+
+:root {
+  color-scheme: light;
+  --canvas: #f6f6f2;
+  --surface: #ffffff;
+  --surface-2: #eeefe9;
+  --surface-raised: #ffffff;
+  --line: #e1e3dc;
+  --line-strong: #8f978f;
+  --ink: #16211e;
+  --ink-muted: #4a5651;
+  --ink-subtle: #5d6964;
+  --brand: #0c6b60;
+  --brand-hover: #0a564d;
+  --on-brand: #ffffff;
+  --brand-soft: #e1f0ec;
+  --brand-ink: #0a564d;
+  --accent: #b4540a;
+  --accent-soft: #fbeedb;
+  --accent-ink: #8a3f06;
+  --success: #1b7339;
+  --success-soft: #e3f2e8;
+  --success-ink: #165f2f;
+  --danger: #b42318;
+  --danger-soft: #fcebe9;
+  --danger-ink: #9a1d13;
+  --warning-soft: #fdf3dd;
+  --warning-ink: #7a4305;
+  --focus: #0c6b60;
+  --overlay: rgb(14 22 20 / 0.45);
+  --shadow-color: 150 10% 20%;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --canvas: #0d1312;
+    --surface: #141c1a;
+    --surface-2: #1b2522;
+    --surface-raised: #2b3834;
+    --line: #26322e;
+    --line-strong: #6b7a74;
+    --ink: #e7edea;
+    --ink-muted: #a8b5b0;
+    --ink-subtle: #93a29c;
+    --brand: #3cc2ad;
+    --brand-hover: #62d3c1;
+    --on-brand: #04201b;
+    --brand-soft: #11302a;
+    --brand-ink: #7fdccd;
+    --accent: #f0a640;
+    --accent-soft: #33240f;
+    --accent-ink: #f5c27a;
+    --success: #4cc27a;
+    --success-soft: #11291a;
+    --success-ink: #84d9a4;
+    --danger: #ef7466;
+    --danger-soft: #341614;
+    --danger-ink: #f6a097;
+    --warning-soft: #2f2410;
+    --warning-ink: #f1c46f;
+    --focus: #62d3c1;
+    --overlay: rgb(0 0 0 / 0.6);
+    --shadow-color: 0 0% 0%;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --canvas: #0d1312;
+  --surface: #141c1a;
+  --surface-2: #1b2522;
+  --surface-raised: #2b3834;
+  --line: #26322e;
+  --line-strong: #6b7a74;
+  --ink: #e7edea;
+  --ink-muted: #a8b5b0;
+  --ink-subtle: #93a29c;
+  --brand: #3cc2ad;
+  --brand-hover: #62d3c1;
+  --on-brand: #04201b;
+  --brand-soft: #11302a;
+  --brand-ink: #7fdccd;
+  --accent: #f0a640;
+  --accent-soft: #33240f;
+  --accent-ink: #f5c27a;
+  --success: #4cc27a;
+  --success-soft: #11291a;
+  --success-ink: #84d9a4;
+  --danger: #ef7466;
+  --danger-soft: #341614;
+  --danger-ink: #f6a097;
+  --warning-soft: #2f2410;
+  --warning-ink: #f1c46f;
+  --focus: #62d3c1;
+  --overlay: rgb(0 0 0 / 0.6);
+  --shadow-color: 0 0% 0%;
+}
+
+@theme {
+  --color-*: initial;
+}
+
+@theme inline {
+  --color-white: #ffffff;
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-raised: var(--surface-raised);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-subtle: var(--ink-subtle);
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-on-brand: var(--on-brand);
+  --color-brand-soft: var(--brand-soft);
+  --color-brand-ink: var(--brand-ink);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-ink: var(--accent-ink);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-success-ink: var(--success-ink);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-danger-ink: var(--danger-ink);
+  --color-warning-soft: var(--warning-soft);
+  --color-warning-ink: var(--warning-ink);
+  --color-focus: var(--focus);
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: var(--font-fraunces), ui-serif, Georgia, "Times New Roman", serif;
+  --font-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+
+  --text-display: clamp(2.125rem, 1.55rem + 2.6vw, 3.5rem);
+  --text-display--line-height: 1.08;
+  --text-display--letter-spacing: -0.02em;
+  --text-title: clamp(1.625rem, 1.35rem + 1.2vw, 2.25rem);
+  --text-title--line-height: 1.15;
+  --text-title--letter-spacing: -0.015em;
+
+  --shadow-card: 0 1px 2px hsl(var(--shadow-color) / 0.06), 0 1px 1px hsl(var(--shadow-color) / 0.04);
+  --shadow-raised: 0 10px 30px -12px hsl(var(--shadow-color) / 0.25), 0 2px 6px -2px hsl(var(--shadow-color) / 0.08);
+}
+
 @layer base {
   *,
   ::after,
   ::before,
   ::backdrop,
   ::file-selector-button {
-    border-color: var(--color-gray-200, currentcolor);
+    border-color: var(--line);
   }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    overflow-x: clip;
+  }
+
+  body {
+    background: var(--canvas);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-feature-settings: "cv11", "ss01";
+    -webkit-font-smoothing: antialiased;
+    overflow-x: clip;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: var(--brand-soft);
+    color: var(--ink);
+  }
+
+  input::placeholder {
+    color: var(--ink-subtle);
+    opacity: 1;
+  }
+}
+
+@layer components {
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 1rem;
+    box-shadow: var(--shadow-card);
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 2.75rem;
+    padding: 0.625rem 1.125rem;
+    border-radius: 0.75rem;
+    font-weight: 600;
+    font-size: 0.9375rem;
+    line-height: 1.25rem;
+    border: 1px solid transparent;
+    transition:
+      background-color 150ms ease,
+      border-color 150ms ease,
+      color 150ms ease,
+      box-shadow 150ms ease;
+    -webkit-tap-highlight-color: transparent;
+    cursor: pointer;
+  }
+  .btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+  }
+  .btn-primary {
+    background: var(--brand);
+    color: var(--on-brand);
+    box-shadow: var(--shadow-card);
+  }
+  @media (hover: hover) {
+    .btn-primary:not(:disabled):hover {
+      background: var(--brand-hover);
+    }
+  }
+  .btn-secondary {
+    background: var(--surface);
+    color: var(--ink);
+    border-color: var(--line-strong);
+  }
+  @media (hover: hover) {
+    .btn-secondary:not(:disabled):hover {
+      background: var(--surface-2);
+    }
+  }
+  .btn-ghost {
+    background: transparent;
+    color: var(--ink-muted);
+  }
+  @media (hover: hover) {
+    .btn-ghost:not(:disabled):hover {
+      background: var(--surface-2);
+      color: var(--ink);
+    }
+  }
+  .btn-sm {
+    min-height: 2.25rem;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
+    border-radius: 0.625rem;
+  }
+
+  .field {
+    width: 100%;
+    min-height: 2.875rem;
+    padding: 0.625rem 0.875rem;
+    border-radius: 0.75rem;
+    border: 1px solid var(--line-strong);
+    background: var(--surface);
+    color: var(--ink);
+    font-size: 1rem; /* 16px keeps iOS Safari from zooming on focus */
+    transition:
+      border-color 150ms ease,
+      box-shadow 150ms ease;
+  }
+  .field:focus {
+    outline: none;
+    border-color: var(--brand);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 25%, transparent);
+  }
+
+  select.field {
+    -webkit-appearance: none;
+    appearance: none;
+    padding-right: 2.5rem;
+    background-image: linear-gradient(45deg, transparent 50%, var(--ink-muted) 50%),
+      linear-gradient(135deg, var(--ink-muted) 50%, transparent 50%);
+    background-position:
+      calc(100% - 1.15rem) 50%,
+      calc(100% - 0.8rem) 50%;
+    background-size: 0.35rem 0.35rem;
+    background-repeat: no-repeat;
+  }
+
+  .label {
+    display: block;
+    margin-bottom: 0.375rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  .eyebrow {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--brand-ink);
+  }
+
+  /* Shown only in the light or only in the dark theme (theme toggle icons). */
+  .only-dark {
+    display: none;
+  }
+  :root[data-theme="dark"] .only-dark {
+    display: inline-block;
+  }
+  :root[data-theme="dark"] .only-light {
+    display: none;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .only-dark {
+      display: inline-block;
+    }
+    :root:not([data-theme="light"]) .only-light {
+      display: none;
+    }
+  }
+
+  .skeleton {
+    background: linear-gradient(90deg, var(--surface-2) 0%, var(--line) 50%, var(--surface-2) 100%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s ease-in-out infinite;
+    border-radius: 0.5rem;
+  }
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Flashcard flip. Prefixed backface-visibility for older WebKit. */
+.flip-scene {
+  perspective: 1200px;
+}
+.flip-card {
+  display: grid;
+  transform-style: preserve-3d;
+  transition: transform 500ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.flip-card[data-flipped="true"] {
+  transform: rotateY(180deg);
+}
+.flip-face {
+  grid-area: 1 / 1;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+.flip-back {
+  transform: rotateY(180deg);
 }

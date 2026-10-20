@@ -1,24 +1,33 @@
 "use client";
 import { useState } from "react";
-import { RoadmapNode, RoadmapStep } from "@/components/RoadmapNode";
-import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { PartyPopper, Route } from "lucide-react";
+import { RoadmapNode, type RoadmapStep } from "@/components/RoadmapNode";
 import { ErrorNotice } from "@/components/ErrorNotice";
+import { GeneratingState } from "@/components/GeneratingState";
+import { TopicForm } from "@/components/TopicForm";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { PageShell } from "@/components/ui/PageShell";
+import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { ApiError, postJson } from "@/lib/api-client";
 import { recordSession } from "@/lib/record-session";
+import { useI18n } from "@/i18n/I18nProvider";
+
+type Level = "beginner" | "intermediate" | "advanced";
 
 export default function RoadmapPage() {
-  const [topicInput, setTopicInput] = useState("");
-  const [level, setLevel] = useState("beginner");
+  const { t } = useI18n();
+  const [level, setLevel] = useState<Level>("beginner");
   const [steps, setSteps] = useState<RoadmapStep[]>([]);
   const [title, setTitle] = useState("");
+  const [lastTopic, setLastTopic] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<ApiError | null>(null);
 
-  const handleGenerate = async () => {
-    const topic = topicInput.trim();
-    if (!topic || isLoading) return;
+  const generate = async (topic: string) => {
+    if (isLoading) return;
     setIsLoading(true);
     setError(null);
+    setLastTopic(topic);
     const started = Date.now();
     try {
       const data = await postJson<{ roadmap: { title: string; steps: RoadmapStep[] }; tokens_used?: number }>(
@@ -35,59 +44,92 @@ export default function RoadmapPage() {
     }
   };
 
+  const completeStep = (index: number) => {
+    setSteps((prev) =>
+      prev.map((s, i) => {
+        if (i === index) return { ...s, status: "completed" };
+        if (i === index + 1 && s.status === "upcoming") return { ...s, status: "current" };
+        return s;
+      }),
+    );
+  };
+
+  const done = steps.filter((s) => s.status === "completed").length;
+  const allDone = steps.length > 0 && done === steps.length;
+
   return (
-    <main className="min-h-[70vh] px-4 py-6 sm:p-8 max-w-3xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6">🗺️ Learning Roadmap</h1>
+    <PageShell width="narrow">
+      <PageHeader icon={Route} title={t("roadmap.title")} description={t("roadmap.description")} />
 
       {steps.length === 0 && !isLoading && (
         <>
-          <div className="bg-white rounded-xl shadow-sm p-6 max-w-md mx-auto">
-            <input
-              type="text"
-              value={topicInput}
-              onChange={(e) => setTopicInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleGenerate()}
-              placeholder="Topic to learn..."
-              className="w-full px-4 py-2 border rounded-lg mb-3 text-base"
-            />
-            <select
-              value={level}
-              onChange={(e) => setLevel(e.target.value)}
-              className="w-full px-4 py-2 border rounded-lg mb-4 bg-white text-base"
-            >
-              <option value="beginner">Beginner</option>
-              <option value="intermediate">Intermediate</option>
-              <option value="advanced">Advanced</option>
-            </select>
-            <button onClick={handleGenerate} className="w-full bg-purple-500 text-white py-2 rounded-lg hover:bg-purple-600">
-              Generate Roadmap
-            </button>
+          <TopicForm
+            title={t("roadmap.formTitle")}
+            placeholder={t("roadmap.placeholder")}
+            submitLabel={t("roadmap.generate")}
+            busy={isLoading}
+            defaultTopic={lastTopic}
+            onSubmit={generate}
+          >
+            <div className="sm:col-span-2">
+              <SegmentedControl
+                label={t("roadmap.level")}
+                value={level}
+                onChange={setLevel}
+                options={[
+                  { value: "beginner", label: t("roadmap.beginner") },
+                  { value: "intermediate", label: t("roadmap.intermediate") },
+                  { value: "advanced", label: t("roadmap.advanced") },
+                ]}
+              />
+            </div>
+          </TopicForm>
+          <div className="mx-auto max-w-2xl">
+            <ErrorNotice error={error} onRetry={lastTopic ? () => generate(lastTopic) : undefined} />
           </div>
-          <ErrorNotice error={error} />
         </>
       )}
 
-      {isLoading && <LoadingSpinner size="lg" label="Building your roadmap..." />}
+      {isLoading && <GeneratingState shape="roadmap" label={t("roadmap.loading")} hint={t("roadmap.loadingHint")} />}
 
       {steps.length > 0 && (
-        <div>
-          <h2 className="text-xl font-semibold mb-6">{title}</h2>
-          {steps.map((step, i) => (
-            <RoadmapNode key={step.id} step={step} index={i} isLast={i === steps.length - 1} />
-          ))}
-          <div className="mt-6 text-center">
+        <div className="mx-auto max-w-2xl">
+          <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-xs font-bold uppercase tracking-wider text-ink-subtle">
+                {t(`roadmap.${level}`)} · {t("roadmap.stepsCount", { count: steps.length })}
+              </p>
+              <h2 className="mt-1 font-display text-2xl font-semibold leading-tight text-ink">{title}</h2>
+            </div>
             <button
+              type="button"
               onClick={() => {
                 setSteps([]);
-                setTopicInput("");
               }}
-              className="text-sm text-gray-500 underline hover:text-gray-700"
+              className="btn btn-ghost btn-sm"
             >
-              New roadmap
+              {t("roadmap.newRoadmap")}
             </button>
           </div>
+          {allDone && (
+            <p role="status" className="mb-6 flex items-center gap-2 rounded-xl bg-success-soft px-4 py-3 text-sm font-semibold text-success-ink">
+              <PartyPopper className="h-4 w-4" aria-hidden="true" />
+              {t("roadmap.allDone")}
+            </p>
+          )}
+          <ol>
+            {steps.map((step, i) => (
+              <RoadmapNode
+                key={step.id}
+                step={step}
+                index={i}
+                isLast={i === steps.length - 1}
+                onComplete={() => completeStep(i)}
+              />
+            ))}
+          </ol>
         </div>
       )}
-    </main>
+    </PageShell>
   );
 }

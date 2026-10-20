@@ -2,15 +2,17 @@ import { NextResponse } from "next/server";
 import { chatCompletion } from "@/lib/llm/client";
 import { extractJson, handleLlmRoute, intField, textField, unreadable } from "@/lib/llm/server";
 import { LlmError } from "@/lib/llm/errors";
+import { languageInstruction, languageReminder, outputLanguage } from "@/lib/llm/language";
 
 export async function POST(request: Request) {
   return handleLlmRoute(request, async ({ llm, body }) => {
     const topic = textField(body.topic, 200);
     if (!topic) throw new LlmError("invalid_request", "Enter a topic first.", 400);
     const count = intField(body.count, 1, 20, 10);
+    const language = outputLanguage(body.language);
 
-    const systemPrompt = `Generate ${count} study flashcards about the user's topic. Return ONLY a valid JSON array, no prose.`;
-    const userPrompt = `Topic: ${JSON.stringify(topic)}. Format: [{"id":"fc1","front":"question or concept","back":"answer or definition"}]`;
+    const systemPrompt = `Generate ${count} study flashcards about the user's topic. Return ONLY a valid JSON array, no prose. ${languageInstruction(language)}`;
+    const userPrompt = `Topic: ${JSON.stringify(topic)}. Format: [{"id":"fc1","front":"question or concept","back":"answer or definition"}]. ${languageReminder(language)}`;
 
     const result = await chatCompletion(
       llm,

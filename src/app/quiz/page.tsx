@@ -1,22 +1,38 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { clsx } from "clsx";
+import { ArrowRight, Check, ListChecks, RotateCcw, X } from "lucide-react";
 import { QuizCard } from "@/components/QuizCard";
-import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { ErrorNotice } from "@/components/ErrorNotice";
+import { GeneratingState } from "@/components/GeneratingState";
+import { TopicForm } from "@/components/TopicForm";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { PageShell } from "@/components/ui/PageShell";
+import { ProgressBar } from "@/components/ui/ProgressBar";
+import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { useQuizState } from "@/hooks/useQuizState";
 import { recordSession } from "@/lib/record-session";
+import { useI18n } from "@/i18n/I18nProvider";
+
+type Difficulty = "easy" | "medium" | "hard";
 
 export default function QuizPage() {
-  const [topicInput, setTopicInput] = useState("");
-  const [startedAt, setStartedAt] = useState(0);
+  const { t } = useI18n();
   const quiz = useQuizState();
+  const [difficulty, setDifficulty] = useState<Difficulty>("medium");
+  const [count, setCount] = useState(5);
+  const [selected, setSelected] = useState<number | undefined>();
+  const [startedAt, setStartedAt] = useState(0);
+  const [lastTopic, setLastTopic] = useState("");
   const recorded = useRef(false);
 
-  const handleGenerate = async () => {
-    if (!topicInput.trim() || quiz.isGenerating) return;
+  const generate = async (topic: string) => {
+    if (quiz.isGenerating) return;
     recorded.current = false;
+    setSelected(undefined);
+    setLastTopic(topic);
     setStartedAt(Date.now());
-    await quiz.generateQuiz(topicInput.trim());
+    await quiz.generateQuiz(topic, count, difficulty);
   };
 
   const score = quiz.getScore();
@@ -35,67 +51,217 @@ export default function QuizPage() {
   }, [quiz.isComplete, quiz.topic, quiz.tokensUsed, score.percentage, startedAt]);
 
   const currentQ = quiz.questions[quiz.currentQuestionIndex];
+  const answered = selected !== undefined;
+  const isLast = quiz.currentQuestionIndex === quiz.questions.length - 1;
+
+  const answer = (idx: number) => {
+    if (answered) return;
+    setSelected(idx);
+    quiz.answerQuestion(idx);
+  };
+
+  const next = () => {
+    setSelected(undefined);
+    quiz.nextQuestion();
+  };
+
+  const restart = () => {
+    quiz.reset();
+    setSelected(undefined);
+  };
+
+  const showForm = quiz.questions.length === 0 && !quiz.isGenerating;
 
   return (
-    <main className="min-h-[70vh] px-4 py-6 sm:p-8 max-w-4xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6">📝 Adaptive Quiz</h1>
+    <PageShell width="narrow">
+      <PageHeader icon={ListChecks} title={t("quiz.title")} description={t("quiz.description")} />
 
-      {quiz.questions.length === 0 && !quiz.isGenerating && (
+      {showForm && (
         <>
-          <div className="bg-white rounded-xl shadow-sm p-6 max-w-md mx-auto">
-            <h2 className="font-semibold mb-4">Choose a topic</h2>
-            <input
-              type="text"
-              value={topicInput}
-              onChange={(e) => setTopicInput(e.target.value)}
-              placeholder="e.g., Machine Learning, React Hooks..."
-              className="w-full px-4 py-2 border rounded-lg mb-4 text-base"
-              onKeyDown={(e) => e.key === "Enter" && handleGenerate()}
+          <TopicForm
+            title={t("quiz.formTitle")}
+            placeholder={t("quiz.placeholder")}
+            submitLabel={t("quiz.generate")}
+            busy={quiz.isGenerating}
+            defaultTopic={lastTopic}
+            onSubmit={generate}
+          >
+            <SegmentedControl
+              label={t("quiz.difficulty")}
+              value={difficulty}
+              onChange={setDifficulty}
+              options={[
+                { value: "easy", label: t("quiz.easy") },
+                { value: "medium", label: t("quiz.medium") },
+                { value: "hard", label: t("quiz.hard") },
+              ]}
             />
-            <button
-              onClick={handleGenerate}
-              className="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition"
-            >
-              Generate Quiz
-            </button>
+            <SegmentedControl
+              label={t("quiz.questionCount")}
+              value={count}
+              onChange={setCount}
+              options={[
+                { value: 5, label: "5" },
+                { value: 10, label: "10" },
+              ]}
+            />
+          </TopicForm>
+          <div className="mx-auto max-w-2xl">
+            <ErrorNotice error={quiz.generationError} onRetry={lastTopic ? () => generate(lastTopic) : undefined} />
           </div>
-          <ErrorNotice error={quiz.generationError} />
         </>
       )}
 
-      {quiz.isGenerating && (
-        <div className="text-center py-12">
-          <LoadingSpinner size="lg" label="Generating quiz..." />
-        </div>
-      )}
+      {quiz.isGenerating && <GeneratingState shape="quiz" label={t("quiz.loading")} hint={t("quiz.loadingHint")} />}
 
       {currentQ && !quiz.isComplete && (
-        <QuizCard
-          question={currentQ}
-          questionNumber={quiz.currentQuestionIndex + 1}
-          totalQuestions={quiz.questions.length}
-          onAnswer={quiz.answerAndNext}
-        />
+        <div className="mx-auto max-w-2xl">
+          <div className="mb-4 flex items-center gap-3">
+            <p className="min-w-0 flex-1 truncate text-sm font-semibold text-ink">{quiz.topic}</p>
+            <button type="button" onClick={restart} className="btn btn-ghost btn-sm">
+              {t("common.newTopic")}
+            </button>
+          </div>
+          <div className="mb-5">
+            <ProgressBar
+              value={quiz.currentQuestionIndex + (answered ? 1 : 0)}
+              max={quiz.questions.length}
+              label={t("quiz.questionOf", { current: quiz.currentQuestionIndex + 1, total: quiz.questions.length })}
+            />
+          </div>
+          <QuizCard
+            question={currentQ}
+            questionNumber={quiz.currentQuestionIndex + 1}
+            totalQuestions={quiz.questions.length}
+            onAnswer={answer}
+            selectedAnswer={selected}
+            showResult={answered}
+          />
+          {answered && (
+            <div className="mt-5 flex justify-end">
+              <button type="button" onClick={next} className="btn btn-primary w-full sm:w-auto" autoFocus>
+                {isLast ? t("quiz.seeResults") : t("common.next")}
+                <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              </button>
+            </div>
+          )}
+        </div>
       )}
 
       {quiz.isComplete && (
-        <div className="bg-white rounded-xl shadow-sm p-6 max-w-md mx-auto text-center">
-          <h2 className="text-2xl font-bold mb-2">🎉 Quiz Complete!</h2>
-          <p className="text-4xl font-bold text-blue-500 my-4">{score.percentage}%</p>
-          <p className="text-gray-600">
-            {score.correct} / {score.total} correct
-          </p>
-          <button
-            onClick={() => {
-              quiz.reset();
-              setTopicInput("");
-            }}
-            className="mt-4 bg-gray-200 px-4 py-2 rounded-lg hover:bg-gray-300"
-          >
-            Try Another Topic
+        <QuizResults
+          topic={quiz.topic}
+          correct={score.correct}
+          total={score.total}
+          percentage={score.percentage}
+          onRetake={() => {
+            quiz.setQuestions(quiz.questions, quiz.topic);
+            recorded.current = false;
+            setStartedAt(Date.now());
+          }}
+          onNewTopic={restart}
+        />
+      )}
+    </PageShell>
+  );
+}
+
+function QuizResults({
+  topic,
+  correct,
+  total,
+  percentage,
+  onRetake,
+  onNewTopic,
+}: {
+  topic: string;
+  correct: number;
+  total: number;
+  percentage: number;
+  onRetake: () => void;
+  onNewTopic: () => void;
+}) {
+  const { t } = useI18n();
+  const quiz = useQuizState();
+  const verdict = percentage >= 80 ? "quiz.scoreGreat" : percentage >= 50 ? "quiz.scoreGood" : "quiz.scoreLow";
+  const radius = 52;
+  const circumference = 2 * Math.PI * radius;
+
+  return (
+    <div className="mx-auto max-w-2xl">
+      <section className="card flex flex-col items-center p-6 text-center sm:p-8" aria-labelledby="quiz-done">
+        <div className="relative h-36 w-36">
+          <svg viewBox="0 0 120 120" className="h-full w-full -rotate-90" aria-hidden="true">
+            <circle cx="60" cy="60" r={radius} fill="none" stroke="var(--surface-2)" strokeWidth="10" />
+            <circle
+              cx="60"
+              cy="60"
+              r={radius}
+              fill="none"
+              stroke="var(--brand)"
+              strokeWidth="10"
+              strokeLinecap="round"
+              strokeDasharray={circumference}
+              strokeDashoffset={circumference * (1 - percentage / 100)}
+            />
+          </svg>
+          <span className="absolute inset-0 flex items-center justify-center font-display text-4xl font-semibold text-ink">
+            {percentage}%
+          </span>
+        </div>
+        <h2 id="quiz-done" className="mt-5 font-display text-2xl font-semibold text-ink">
+          {t("quiz.completeTitle")}
+        </h2>
+        <p className="mt-1 text-sm font-medium text-ink-muted">
+          {topic} · {t("quiz.scoreLine", { correct, total })}
+        </p>
+        <p className="mt-3 max-w-md text-[0.9375rem] leading-relaxed text-ink-muted">{t(verdict)}</p>
+        <div className="mt-6 flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+          <button type="button" onClick={onRetake} className="btn btn-secondary">
+            <RotateCcw className="h-4 w-4" aria-hidden="true" />
+            {t("quiz.retake")}
+          </button>
+          <button type="button" onClick={onNewTopic} className="btn btn-primary">
+            {t("quiz.tryAnother")}
           </button>
         </div>
-      )}
-    </main>
+      </section>
+
+      <section className="mt-8" aria-labelledby="quiz-review">
+        <h3 id="quiz-review" className="mb-3 text-sm font-semibold uppercase tracking-wide text-ink-muted">
+          {t("quiz.reviewTitle")}
+        </h3>
+        <ol className="space-y-3">
+          {quiz.questions.map((q, i) => {
+            const attempt = quiz.attempts.find((a) => a.questionId === q.id);
+            const ok = !!attempt?.isCorrect;
+            return (
+              <li key={q.id} className="card flex gap-3 p-4">
+                <span
+                  className={clsx(
+                    "flex h-7 w-7 shrink-0 items-center justify-center rounded-full",
+                    ok ? "bg-success-soft text-success-ink" : "bg-danger-soft text-danger-ink",
+                  )}
+                >
+                  {ok ? <Check className="h-4 w-4" aria-label={t("quiz.correct")} /> : <X className="h-4 w-4" aria-label={t("quiz.incorrect")} />}
+                </span>
+                <div className="min-w-0 text-sm">
+                  <p className="font-medium text-ink">
+                    {i + 1}. {q.question}
+                  </p>
+                  <p className="mt-1 text-success-ink">
+                    <Check className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />
+                    {q.options[q.correctIndex]}
+                  </p>
+                  {!ok && attempt && (
+                    <p className="mt-0.5 text-ink-muted">{t("quiz.yourAnswer", { answer: q.options[attempt.selectedIndex] ?? "" })}</p>
+                  )}
+                </div>
+              </li>
+            );
+          })}
+        </ol>
+      </section>
+    </div>
   );
 }

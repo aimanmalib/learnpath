@@ -7,17 +7,15 @@ interface LoadingSpinnerProps {
 }
 
 export function LoadingSpinner({ size = "md", label }: LoadingSpinnerProps) {
-  const sizes = { sm: "w-4 h-4", md: "w-8 h-8", lg: "w-12 h-12" };
+  const sizes = { sm: "h-5 w-5", md: "h-8 w-8", lg: "h-12 w-12" };
 
   return (
     <div className="flex flex-col items-center gap-2">
       <div
-        className={clsx(
-          "border-2 border-gray-200 border-t-blue-500 rounded-full animate-spin",
-          sizes[size],
-        )}
+        aria-hidden="true"
+        className={clsx("animate-spin rounded-full border-2 border-line border-t-brand", sizes[size])}
       />
-      {label && <span className="text-sm text-gray-500">{label}</span>}
+      {label && <span className="text-sm text-ink-muted">{label}</span>}
     </div>
   );
 }

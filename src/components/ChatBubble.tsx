@@ -1,5 +1,6 @@
 "use client";
 import { clsx } from "clsx";
+import { useI18n } from "@/i18n/I18nProvider";
 
 interface ChatBubbleProps {
   role: "user" | "assistant";
@@ -10,35 +11,37 @@ interface ChatBubbleProps {
 }
 
 export function ChatBubble({ role, content, reasoning, timestamp, tokensUsed }: ChatBubbleProps) {
+  const { t } = useI18n();
   const isUser = role === "user";
 
   return (
-    <div className={clsx("flex gap-3 mb-4", isUser ? "flex-row-reverse" : "flex-row")}>
+    <div className={clsx("mb-4 flex gap-3", isUser ? "flex-row-reverse" : "flex-row")}>
       <div
+        aria-hidden="true"
         className={clsx(
-          "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0",
-          isUser ? "bg-blue-500 text-white" : "bg-emerald-500 text-white",
+          "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold",
+          isUser ? "bg-brand text-on-brand" : "bg-surface-2 text-ink",
         )}
       >
-        {isUser ? "U" : "M"}
+        {isUser ? t("chat.you").slice(0, 1) : t("chat.model")}
       </div>
       <div
         className={clsx(
           "max-w-[75%] rounded-2xl px-4 py-3",
-          isUser ? "bg-blue-500 text-white" : "bg-gray-100 text-gray-900",
+          isUser ? "bg-brand text-on-brand" : "border border-line bg-surface text-ink",
         )}
       >
-        <p className="text-sm whitespace-pre-wrap">{content}</p>
+        <p className="whitespace-pre-wrap text-sm">{content}</p>
         {reasoning && (
-          <details className="mt-2 text-xs opacity-70">
-            <summary className="cursor-pointer">Reasoning</summary>
+          <details className="mt-2 text-xs opacity-80">
+            <summary className="cursor-pointer">{t("chat.reasoning")}</summary>
             <p className="mt-1 italic">{reasoning}</p>
           </details>
         )}
         {(timestamp || tokensUsed) && (
-          <div className="mt-1 flex gap-2 text-xs opacity-50">
+          <div className="mt-1 flex gap-2 text-xs opacity-75">
             {timestamp && <span>{timestamp}</span>}
-            {tokensUsed && <span>{tokensUsed} tokens</span>}
+            {tokensUsed && <span>{t("common.tokens", { count: tokensUsed })}</span>}
           </div>
         )}
       </div>

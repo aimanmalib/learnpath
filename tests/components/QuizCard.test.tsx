@@ -31,6 +31,12 @@ describe("QuizCard", () => {
     expect(onAnswer).toHaveBeenCalledWith(1);
   });
 
+  it("marks a wrong answer and names the correct letter", () => {
+    render(<QuizCard question={question} questionNumber={1} totalQuestions={5} onAnswer={vi.fn()} selectedAnswer={0} showResult />);
+    expect(screen.getByText("Not quite")).toBeInTheDocument();
+    expect(screen.getByText(/The answer is B\./)).toBeInTheDocument();
+  });
+
   it("shows explanation when showResult", () => {
     render(<QuizCard question={question} questionNumber={1} totalQuestions={5} onAnswer={vi.fn()} showResult />);
     expect(screen.getByText(/Basic math/)).toBeInTheDocument();
@@ -38,6 +44,6 @@ describe("QuizCard", () => {
 
   it("shows difficulty badge", () => {
     render(<QuizCard question={question} questionNumber={1} totalQuestions={5} onAnswer={vi.fn()} />);
-    expect(screen.getByText("easy")).toBeInTheDocument();
+    expect(screen.getByText("Easy")).toBeInTheDocument();
   });
 });

@@ -1,80 +1,127 @@
 "use client";
+import Link from "next/link";
+import { ArrowRight, ChartColumn, Clock, Coins, Layers } from "lucide-react";
 import { ProgressChart } from "@/components/ProgressChart";
-import { useProgressStore } from "@/store/progress-store";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { PageShell } from "@/components/ui/PageShell";
+import { useProgressStore, type StudySession } from "@/store/progress-store";
+import { useI18n } from "@/i18n/I18nProvider";
+import type { MessageKey } from "@/i18n/messages";
+
+const DAY_KEYS: Record<string, MessageKey> = {
+  Sun: "days.sun",
+  Mon: "days.mon",
+  Tue: "days.tue",
+  Wed: "days.wed",
+  Thu: "days.thu",
+  Fri: "days.fri",
+  Sat: "days.sat",
+};
+
+const FEATURE_KEYS: Record<StudySession["feature"], MessageKey> = {
+  quiz: "progress.featureQuiz",
+  flashcards: "progress.featureFlashcards",
+  roadmap: "progress.featureRoadmap",
+  concepts: "progress.featureConcepts",
+  chat: "progress.featureChat",
+};
 
 export default function ProgressPage() {
+  const { t, intl } = useI18n();
   const store = useProgressStore();
   const topicProgress = store.getTopicProgress();
   const weeklyStats = store.getWeeklyStats();
-  const tokensByFeature = store.sessions.reduce<Record<string, number>>((acc, s) => {
+  const tokensByFeature = store.sessions.reduce<Partial<Record<StudySession["feature"], number>>>((acc, s) => {
     acc[s.feature] = (acc[s.feature] || 0) + s.tokensUsed;
     return acc;
   }, {});
+  const maxTokens = Math.max(1, ...Object.values(tokensByFeature).map((n) => n ?? 0));
+  const nf = new Intl.NumberFormat(intl);
+  const hasScore = (topic: string) => store.sessions.some((s) => s.topic === topic && s.score !== undefined);
+
+  const stats = [
+    { icon: Layers, label: t("progress.sessions"), value: nf.format(store.sessions.length) },
+    { icon: Clock, label: t("progress.studyTime"), value: t("progress.studyTimeValue", { minutes: nf.format(Math.round(store.totalStudyTime / 60000)) }) },
+    { icon: Coins, label: t("progress.tokens"), value: nf.format(store.totalTokens) },
+  ];
 
   return (
-    <main className="min-h-[70vh] px-4 py-6 sm:p-8 max-w-4xl mx-auto">
-      <h1 className="text-3xl font-bold mb-2">📊 Progress Dashboard</h1>
-      <p className="text-sm text-gray-500 mb-6">
-        Quizzes, flashcard sets and roadmaps you create during this visit. Nothing is saved after you close the tab.
-      </p>
+    <PageShell>
+      <PageHeader icon={ChartColumn} title={t("progress.title")} description={t("progress.description")} />
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <div className="bg-white rounded-xl shadow-sm p-4 text-center">
-          <p className="text-2xl font-bold text-blue-500">{store.sessions.length}</p>
-          <p className="text-sm text-gray-500">Total Sessions</p>
-        </div>
-        <div className="bg-white rounded-xl shadow-sm p-4 text-center">
-          <p className="text-2xl font-bold text-green-500">
-            {Math.round(store.totalStudyTime / 60000)}m
-          </p>
-          <p className="text-sm text-gray-500">Study Time</p>
-        </div>
-        <div className="bg-white rounded-xl shadow-sm p-4 text-center">
-          <p className="text-2xl font-bold text-purple-500">
-            {(store.totalTokens / 1000).toFixed(1)}K
-          </p>
-          <p className="text-sm text-gray-500">Tokens Used</p>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <ProgressChart
-          data={weeklyStats.map((s) => ({ label: s.day, value: s.sessions }))}
-          title="Weekly Activity"
+      {store.sessions.length === 0 ? (
+        <EmptyState
+          icon={ChartColumn}
+          title={t("progress.emptyTitle")}
+          description={t("progress.emptyDesc")}
+          action={
+            <Link href="/quiz" className="btn btn-primary">
+              {t("progress.emptyCta")}
+              <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            </Link>
+          }
         />
+      ) : (
+        <>
+          <dl className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
+            {stats.map((s) => (
+              <div key={s.label} className="card flex items-center gap-4 p-5">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-brand-ink">
+                  <s.icon className="h-5 w-5" aria-hidden="true" />
+                </span>
+                <div>
+                  <dt className="text-sm text-ink-muted">{s.label}</dt>
+                  <dd className="font-display text-2xl font-semibold tabular-nums text-ink">{s.value}</dd>
+                </div>
+              </div>
+            ))}
+          </dl>
 
-        <div className="bg-white rounded-xl shadow-sm p-4">
-          <h3 className="text-sm font-semibold text-gray-700 mb-3">Tokens used by feature</h3>
-          {Object.keys(tokensByFeature).length === 0 ? (
-            <p className="text-sm text-gray-500">Nothing yet. Generate a quiz, flashcards or a roadmap to see usage here.</p>
-          ) : (
-            <ul className="space-y-2">
-              {Object.entries(tokensByFeature).map(([feature, tokens]) => (
-                <li key={feature} className="flex items-center justify-between text-sm">
-                  <span className="capitalize text-gray-600">{feature}</span>
-                  <span className="font-medium tabular-nums">{tokens.toLocaleString("en")}</span>
+          <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
+            <ProgressChart
+              data={weeklyStats.map((s) => ({ label: t(DAY_KEYS[s.day] ?? "days.sun"), value: s.sessions }))}
+              title={t("progress.weekly")}
+              caption={t("progress.weeklyCaption")}
+            />
+
+            <section className="card p-5">
+              <h3 className="text-sm font-semibold text-ink">{t("progress.byFeature")}</h3>
+              <ul className="mt-5 space-y-4">
+                {Object.entries(tokensByFeature).map(([feature, tokens]) => (
+                  <li key={feature}>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-ink-muted">{t(FEATURE_KEYS[feature as StudySession["feature"]])}</span>
+                      <span className="font-semibold tabular-nums text-ink">{nf.format(tokens ?? 0)}</span>
+                    </div>
+                    <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-surface-2" aria-hidden="true">
+                      <div className="h-full rounded-full bg-brand" style={{ width: `${((tokens ?? 0) / maxTokens) * 100}%` }} />
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          </div>
+
+          <section className="mt-8" aria-labelledby="topics-title">
+            <h2 id="topics-title" className="mb-4 font-display text-xl font-semibold text-ink">
+              {t("progress.topics")}
+            </h2>
+            <ul className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              {Object.entries(topicProgress).map(([topic, data]) => (
+                <li key={topic} className="card p-4">
+                  <p className="font-semibold text-ink">{topic}</p>
+                  <p className="mt-0.5 text-sm text-ink-muted">
+                    {hasScore(topic)
+                      ? t("progress.topicLine", { sessions: data.sessions, score: data.avgScore })
+                      : t("progress.topicLineNoScore", { sessions: data.sessions })}
+                  </p>
                 </li>
               ))}
             </ul>
-          )}
-        </div>
-      </div>
-
-      {Object.keys(topicProgress).length > 0 && (
-        <div className="mt-8">
-          <h2 className="text-lg font-semibold mb-4">Topic Progress</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {Object.entries(topicProgress).map(([topic, data]) => (
-              <div key={topic} className="bg-white rounded-xl shadow-sm p-4">
-                <h3 className="font-medium">{topic}</h3>
-                <p className="text-sm text-gray-500">
-                  {data.sessions} sessions • Avg: {data.avgScore}%
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
+          </section>
+        </>
       )}
-    </main>
+    </PageShell>
   );
 }

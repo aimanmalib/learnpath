@@ -11,14 +11,11 @@ export function TokenUsageBar({ feature, current, daily }: TokenUsageBarProps) {
 
   return (
     <div className="flex items-center gap-3">
-      <span className="text-xs text-gray-500 w-20 capitalize">{feature}</span>
-      <div className="flex-1 bg-gray-100 rounded-full h-2 overflow-hidden">
-        <div
-          className="h-full bg-indigo-500 rounded-full transition-all"
-          style={{ width: `${percentage}%` }}
-        />
+      <span className="w-20 text-xs capitalize text-ink-muted">{feature}</span>
+      <div className="h-2 flex-1 overflow-hidden rounded-full bg-surface-2">
+        <div className="h-full rounded-full bg-brand transition-all" style={{ width: `${percentage}%` }} />
       </div>
-      <span className="text-xs text-gray-400 w-16 text-right">
+      <span className="w-16 text-right text-xs text-ink-subtle">
         {(current / 1000).toFixed(1)}K / {daily}M
       </span>
     </div>

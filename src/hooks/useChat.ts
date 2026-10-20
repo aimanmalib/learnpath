@@ -1,6 +1,6 @@
 "use client";
 import { useCallback, useState } from "react";
-import { ApiError, apiHeaders, openSettings, postJson, toApiError } from "@/lib/api-client";
+import { ApiError, apiHeaders, openSettings, postJson, toApiError, withLanguage } from "@/lib/api-client";
 import { parseSSEStream } from "@/lib/sse-parser";
 
 interface ChatState {
@@ -52,11 +52,11 @@ export function useChat() {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: apiHeaders(),
-        body: JSON.stringify({ message, systemPrompt, stream: true }),
+        body: JSON.stringify(withLanguage({ message, systemPrompt, stream: true })),
       });
       if (!res.ok) {
         const err = await toApiError(res);
-        if (err.code === "missing_key") openSettings(err.message);
+        if (err.code === "missing_key") openSettings(err.code);
         throw err;
       }
       if (!res.body) throw new ApiError("empty_stream", "The server returned an empty stream.", res.status);

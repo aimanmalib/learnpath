@@ -186,3 +186,65 @@ describe("GET /api/llm-config", () => {
     expect(text).not.toContain(ENV_KEY);
   });
 });
+
+describe("output language reaches the model", () => {
+  const h = { "x-llm-key": HDR_KEY };
+
+  function sentMessages(): { role: string; content: string }[] {
+    return JSON.parse(fetchMock.mock.calls[0][1].body).messages;
+  }
+
+  const cases: [string, (r: Request) => Promise<Response>, Record<string, unknown>, string][] = [
+    ["quiz", quiz, { topic: "Fotosintesis" }, quizJson],
+    ["flashcards", flashcards, { topic: "Fotosintesis" }, '[{"front":"Q","back":"A"}]'],
+    ["roadmap", roadmap, { topic: "Fotosintesis" }, '{"title":"T","steps":[{"title":"S"}]}'],
+    ["chat", chat, { message: "Apa itu klorofil?" }, "ok"],
+    ["analyze", analyze, { topic: "Fotosintesis", sessions: [] }, "ok"],
+  ];
+
+  for (const [name, route, body, reply] of cases) {
+    it(`${name}: language "ms" asks for Malaysian Malay and warns against Indonesian`, async () => {
+      fetchMock.mockResolvedValue(completion(reply));
+      const res = await route(req({ ...body, language: "ms" }, h));
+      expect(res.status).toBe(200);
+      const messages = sentMessages();
+      const system = messages.find((m) => m.role === "system")?.content ?? "";
+      expect(system).toContain("Bahasa Melayu as used in Malaysia");
+      expect(system).toContain("Do not use Indonesian");
+      expect(system).toContain("kerana (not karena)");
+      expect(system).not.toContain("in English.");
+    });
+
+    it(`${name}: language "en" (and the default) asks for English`, async () => {
+      fetchMock.mockResolvedValue(completion(reply));
+      await route(req({ ...body, language: "en" }, h));
+      const system = sentMessages().find((m) => m.role === "system")?.content ?? "";
+      expect(system).toContain("meant for the learner in English");
+      expect(system).not.toContain("Bahasa Melayu");
+
+      fetchMock.mockClear();
+      fetchMock.mockResolvedValue(completion(reply));
+      await route(req({ ...body, language: "xx-unknown" }, h));
+      expect(sentMessages().find((m) => m.role === "system")?.content).toContain("in English");
+    });
+  }
+
+  it("repeats the language in the user message for generator routes", async () => {
+    await quiz(req({ topic: "Fotosintesis", language: "ms" }, h));
+    expect(sentMessages().find((m) => m.role === "user")?.content).toContain("Answer language: Bahasa Melayu (Malaysian Malay).");
+  });
+
+  it("chat keeps the caller's system prompt after the language instruction", async () => {
+    fetchMock.mockResolvedValue(completion("ok"));
+    await chat(req({ message: "hai", systemPrompt: "You are a tutor.", language: "ms" }, h));
+    const system = sentMessages()[0];
+    expect(system.role).toBe("system");
+    expect(system.content.indexOf("Bahasa Melayu")).toBeLessThan(system.content.indexOf("You are a tutor."));
+  });
+
+  it("roadmap's format example uses Malay time units in BM", async () => {
+    fetchMock.mockResolvedValue(completion('{"title":"T","steps":[{"title":"S"}]}'));
+    await roadmap(req({ topic: "Fotosintesis", language: "ms" }, h));
+    expect(sentMessages().find((m) => m.role === "user")?.content).toContain('"estimatedTime":"2 jam"');
+  });
+});

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { chatCompletion } from "@/lib/llm/client";
 import { extractJson, handleLlmRoute, oneOf, textField, unreadable } from "@/lib/llm/server";
 import { LlmError } from "@/lib/llm/errors";
+import { languageInstruction, languageReminder, outputLanguage } from "@/lib/llm/language";
 
 const LEVELS = ["beginner", "intermediate", "advanced"] as const;
 
@@ -10,9 +11,11 @@ export async function POST(request: Request) {
     const topic = textField(body.topic, 200);
     if (!topic) throw new LlmError("invalid_request", "Enter a topic first.", 400);
     const level = oneOf(body.level, LEVELS, "beginner");
+    const language = outputLanguage(body.language);
+    const exampleTime = language === "ms" ? "2 jam" : "2 hours";
 
-    const systemPrompt = `You are a learning path designer. Create a structured ${level}-level roadmap for the user's topic. Break it into clear steps with estimated times. Return ONLY valid JSON, no prose.`;
-    const userPrompt = `Topic: ${JSON.stringify(topic)}. Format: {"title":"...","steps":[{"id":"s1","title":"...","description":"...","estimatedTime":"2 hours","topics":["a","b"]}]}`;
+    const systemPrompt = `You are a learning path designer. Create a structured ${level}-level roadmap for the user's topic. Break it into clear steps with estimated times. Return ONLY valid JSON, no prose. ${languageInstruction(language)}`;
+    const userPrompt = `Topic: ${JSON.stringify(topic)}. Format: {"title":"...","steps":[{"id":"s1","title":"...","description":"...","estimatedTime":"${exampleTime}","topics":["a","b"]}]}. ${languageReminder(language)}`;
 
     const result = await chatCompletion(
       llm,

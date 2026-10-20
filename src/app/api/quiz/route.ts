@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { chatCompletion } from "@/lib/llm/client";
 import { extractJson, handleLlmRoute, intField, oneOf, textField, unreadable } from "@/lib/llm/server";
 import { LlmError } from "@/lib/llm/errors";
+import { languageInstruction, languageReminder, outputLanguage } from "@/lib/llm/language";
 
 const DIFFICULTIES = ["easy", "medium", "hard"] as const;
 
@@ -21,9 +22,10 @@ export async function POST(request: Request) {
     if (!topic) throw new LlmError("invalid_request", "Enter a topic first.", 400);
     const count = intField(body.count, 1, 10, 5);
     const difficulty = oneOf(body.difficulty, DIFFICULTIES, "medium");
+    const language = outputLanguage(body.language);
 
-    const systemPrompt = `You are LearnPath's quiz generator. Create ${count} multiple-choice questions about the user's topic at ${difficulty} difficulty. Each question must have exactly 4 options with one correct answer. Return ONLY a valid JSON array, no prose.`;
-    const userPrompt = `Topic: ${JSON.stringify(topic)}. Format: [{"id":"q1","question":"...","options":["A","B","C","D"],"correctIndex":0,"explanation":"..."}]`;
+    const systemPrompt = `You are LearnPath's quiz generator. Create ${count} multiple-choice questions about the user's topic at ${difficulty} difficulty. Each question must have exactly 4 options with one correct answer. Return ONLY a valid JSON array, no prose. ${languageInstruction(language)}`;
+    const userPrompt = `Topic: ${JSON.stringify(topic)}. Format: [{"id":"q1","question":"...","options":["A","B","C","D"],"correctIndex":0,"explanation":"..."}]. ${languageReminder(language)}`;
 
     const result = await chatCompletion(
       llm,

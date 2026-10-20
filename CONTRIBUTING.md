@@ -12,50 +12,54 @@ git clone https://github.com/aimanmalib/learnpath.git
 cd learnpath
 npm install
 
-echo 'LLM_PROVIDER=openai' > .env.local
-echo 'OPENAI_API_KEY=*** .env.local
-
-npm run dev      # http://localhost:3000
-npm test         # 116 tests should pass
+npm run dev      # http://localhost:3000, then add your key in Settings
+npm test
 ```
+
+To use a server-side key instead, put `LLM_PROVIDER` and `LLM_API_KEY` in
+`.env.local` (see the README for all variables).
 
 ## Development workflow
 
 1. Fork the repo and create a feature branch: `git checkout -b feat/my-change`
 2. Make your change with tests.
-3. Run the full local gate before pushing:
+3. Run the full local gate before pushing (Node.js 22.12+):
    ```bash
-   npx tsc --noEmit     # type check
+   npm run typecheck    # tsc --noEmit
+   npm run lint         # eslint
    npm test             # vitest
    npm run build        # production build
    ```
 4. Commit using [Conventional Commits](https://www.conventionalcommits.org/)
    (`feat:`, `fix:`, `docs:`, `test:`, `refactor:`, `ci:`).
-5. Open a pull request against `main`. CI runs type check + tests + build on
-   Node 18/20 — keep it green.
+5. Open a pull request against `main`. CI runs the same gate on Node 22 and 24.
 
 ## Adding a new LLM provider
 
-LearnPath talks to any OpenAI-compatible `/chat/completions` endpoint, so most
-providers need only a preset entry. In `src/lib/mimo-client.ts`, add to
-`PROVIDER_PRESETS`:
+Most OpenAI-compatible providers need only a preset entry in
+`src/lib/llm/providers.ts`:
 
 ```ts
-myprovider: {
-  baseUrl: 'https://api.myprovider.com/v1',
-  authStyle: 'bearer',          // 'bearer' or 'api-key'
-  model: 'default-model-name',
-  envKey: 'MYPROVIDER_API_KEY',
-  envBase: 'MYPROVIDER_BASE_URL',
+{
+  id: "myprovider",
+  label: "My Provider",
+  baseUrl: "https://api.myprovider.com/v1",
+  authStyle: "bearer",          // "bearer" or "api-key"
+  defaultModel: "default-model-name",
+  keyRequired: true,
+  selfHostOnly: false,
+  keysUrl: "https://myprovider.com/keys",
 },
 ```
 
-Then add a test in `tests/lib/multi-backend.test.ts` mirroring the existing
-provider cases.
+The base URL becomes part of the server's allowlist, so only add public,
+HTTPS endpoints of real providers. Update `tests/lib/llm-providers.test.ts`
+and the provider table in the README.
 
 ## Good first issues
 
-- Add a provider preset (Together, Groq, DeepSeek, Mistral, ...)
+- Add a provider preset
+- Generate the concept map from study sessions (it is static sample data today)
 - Add a new study feature (essay grading, flashcard import/export)
 - Improve the SM-2 spaced repetition algorithm
 - Accessibility / responsive UI improvements

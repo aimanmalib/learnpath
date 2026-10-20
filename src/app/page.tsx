@@ -5,16 +5,16 @@ const features = [
   { href: "/quiz", icon: "📝", title: "Adaptive Quiz", desc: "AI-generated quizzes that adapt to your level" },
   { href: "/flashcards", icon: "🃏", title: "Flashcards", desc: "Spaced repetition for long-term retention" },
   { href: "/roadmap", icon: "🗺️", title: "Learning Roadmap", desc: "Personalized learning paths" },
-  { href: "/progress", icon: "📊", title: "Progress Tracker", desc: "Visualize your learning journey" },
-  { href: "/concepts", icon: "🧠", title: "Concept Map", desc: "Explore knowledge connections" },
+  { href: "/progress", icon: "📊", title: "Progress Tracker", desc: "Sessions from this visit, by topic" },
+  { href: "/concepts", icon: "🧠", title: "Concept Map", desc: "Explore knowledge connections (sample data)" },
 ];
 
 export default function Home() {
   return (
-    <main className="min-h-screen p-8 max-w-4xl mx-auto">
+    <main className="min-h-[70vh] px-4 py-8 sm:p-8 max-w-4xl mx-auto">
       <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold mb-2">🎓 LearnPath</h1>
-        <p className="text-lg text-gray-600">Adaptive Learning Platform for any OpenAI-compatible LLM</p>
+        <h1 className="text-3xl sm:text-4xl font-bold mb-2">🎓 LearnPath</h1>
+        <p className="text-lg text-gray-600">Adaptive learning with any OpenAI-compatible LLM</p>
         <p className="text-sm text-gray-400 mt-1">AI-driven quizzes, flashcards, and personalized roadmaps</p>
       </div>
 
@@ -30,8 +30,11 @@ export default function Home() {
         ))}
       </div>
 
-      <div className="mt-12 text-center text-sm text-gray-400">
-        <p>Provider-agnostic • Runs on OpenAI, OpenRouter, Ollama, MiMo, or any compatible endpoint</p>
+      <div className="mt-12 text-center text-sm text-gray-500">
+        <p>
+          Bring your own API key: OpenAI, OpenRouter, Groq, DeepSeek, Together AI, Mistral or Xiaomi MiMo. Self-hosted
+          copies can also use Ollama, llama.cpp or any OpenAI-compatible endpoint.
+        </p>
       </div>
     </main>
   );

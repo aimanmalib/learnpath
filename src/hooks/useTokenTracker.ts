@@ -14,6 +14,8 @@ export function useTokenTracker() {
 
   useEffect(() => {
     tracker.loadFromStorage();
+    // Read localStorage after mount so server and client render the same markup.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSummary(tracker.getSummary());
   }, []);
 

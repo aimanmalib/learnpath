@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { TokenTracker, DAILY_ESTIMATES, TOTAL_DAILY_ESTIMATE } from "@/lib/token-tracker";
 
 describe("TokenTracker", () => {

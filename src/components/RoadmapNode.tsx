@@ -62,7 +62,7 @@ export function RoadmapNode({ step, index, isLast }: RoadmapNodeProps) {
         {step.topics && step.topics.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-2">
             {step.topics.map((t) => (
-              <span key={t} className="text-xs bg-gray-100 px-2 py-0.5 rounded">
+              <span key={t} className="text-xs bg-gray-100 px-2 py-0.5 rounded-sm">
                 {t}
               </span>
             ))}

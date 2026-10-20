@@ -29,6 +29,7 @@ describe("parseSSEBuffer", () => {
   it("handles empty buffer", () => {
     const { events, remainder } = parseSSEBuffer("");
     expect(events).toHaveLength(0);
+    expect(remainder).toBe("");
   });
 });
 

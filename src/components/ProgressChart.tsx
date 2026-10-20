@@ -10,7 +10,7 @@ export function ProgressChart({ data, title, color = "#3b82f6" }: ProgressChartP
   const maxVal = Math.max(...data.map((d) => d.max || d.value), 1);
 
   return (
-    <div className="bg-white rounded-xl shadow p-4">
+    <div className="bg-white rounded-xl shadow-sm p-4">
       <h3 className="text-sm font-semibold text-gray-700 mb-3">{title}</h3>
       <div className="space-y-2">
         {data.map((item) => (

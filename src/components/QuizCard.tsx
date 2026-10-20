@@ -27,7 +27,7 @@ export function QuizCard({
         </span>
         <span
           className={clsx(
-            "px-2 py-1 rounded text-xs font-medium",
+            "px-2 py-1 rounded-sm text-xs font-medium",
             question.difficulty === "easy" && "bg-green-100 text-green-700",
             question.difficulty === "medium" && "bg-yellow-100 text-yellow-700",
             question.difficulty === "hard" && "bg-red-100 text-red-700",

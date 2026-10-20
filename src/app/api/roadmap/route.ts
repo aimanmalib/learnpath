@@ -1,43 +1,42 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import { chatCompletion } from "@/lib/llm/client";
+import { extractJson, handleLlmRoute, oneOf, textField, unreadable } from "@/lib/llm/server";
+import { LlmError } from "@/lib/llm/errors";
 
-const MIMO_ENDPOINT = process.env.MIMO_BASE_URL || "https://token-plan-sgp.xiaomimimo.com/v1";
-const MIMO_API_KEY = process.env.MIMO_API_KEY || "";
+const LEVELS = ["beginner", "intermediate", "advanced"] as const;
 
-export async function POST(request: NextRequest) {
-  try {
-    const { topic, level = "beginner" } = await request.json();
+export async function POST(request: Request) {
+  return handleLlmRoute(request, async ({ llm, body }) => {
+    const topic = textField(body.topic, 200);
+    if (!topic) throw new LlmError("invalid_request", "Enter a topic first.", 400);
+    const level = oneOf(body.level, LEVELS, "beginner");
 
-    const systemPrompt = `You are a learning path designer. Create a structured roadmap for learning "${topic}" at ${level} level. Break it into clear steps with estimated times. Return ONLY valid JSON.`;
+    const systemPrompt = `You are a learning path designer. Create a structured ${level}-level roadmap for the user's topic. Break it into clear steps with estimated times. Return ONLY valid JSON, no prose.`;
+    const userPrompt = `Topic: ${JSON.stringify(topic)}. Format: {"title":"...","steps":[{"id":"s1","title":"...","description":"...","estimatedTime":"2 hours","topics":["a","b"]}]}`;
 
-    const response = await fetch(`${MIMO_ENDPOINT}/chat/completions`, {
-      method: "POST",
-      headers: { "api-key": MIMO_API_KEY, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "mimo-v2.5-pro",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: `Create a ${level} learning roadmap for "${topic}". Format: {"title":"...","steps":[{"id":"s1","title":"...","description":"...","estimatedTime":"2 hours","topics":["a","b"],"status":"upcoming"}]}` },
-        ],
-        temperature: 0.7,
-        max_tokens: 4096,
-      }),
-    });
+    const result = await chatCompletion(
+      llm,
+      [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+      { temperature: 0.7, maxTokens: 4096 },
+    );
 
-    if (!response.ok) {
-      return NextResponse.json({ error: "MiMo API error" }, { status: 502 });
-    }
+    const parsed = extractJson(result.content, "object") as { title?: unknown; steps?: unknown } | undefined;
+    const steps = (Array.isArray(parsed?.steps) ? parsed.steps : [])
+      .filter((s): s is { title: string; id?: unknown; description?: unknown; estimatedTime?: unknown; topics?: unknown } => !!s && typeof s.title === "string")
+      .map((s, i) => ({
+        id: typeof s.id === "string" ? s.id : `s${i + 1}`,
+        title: s.title,
+        description: typeof s.description === "string" ? s.description : "",
+        estimatedTime: typeof s.estimatedTime === "string" ? s.estimatedTime : "",
+        topics: Array.isArray(s.topics) ? s.topics.map(String) : [],
+        status: "upcoming" as const,
+      }));
 
-    const data = await response.json();
-    const content = data.choices?.[0]?.message?.content || "{}";
-
-    try {
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
-      const roadmap = jsonMatch ? JSON.parse(jsonMatch[0]) : {};
-      return NextResponse.json({ roadmap, tokens_used: data.usage?.total_tokens || 0 });
-    } catch {
-      return NextResponse.json({ roadmap: {}, raw: content });
-    }
-  } catch {
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
-  }
+    if (steps.length === 0) throw unreadable("a roadmap");
+    const title = typeof parsed?.title === "string" && parsed.title.trim() ? parsed.title : topic;
+    return NextResponse.json({ roadmap: { title, steps }, tokens_used: result.total_tokens });
+  });
 }

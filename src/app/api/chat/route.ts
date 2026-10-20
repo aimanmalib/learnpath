@@ -1,69 +1,30 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import { chatCompletion, chatCompletionStream, type ChatMessage } from "@/lib/llm/client";
+import { handleLlmRoute, textField } from "@/lib/llm/server";
+import { LlmError } from "@/lib/llm/errors";
 
-const MIMO_ENDPOINT = process.env.MIMO_BASE_URL || "https://token-plan-sgp.xiaomimimo.com/v1";
-const MIMO_API_KEY = process.env.MIMO_API_KEY || "";
-const MIMO_MODEL = process.env.MIMO_MODEL || "mimo-v2.5-pro";
+export async function POST(request: Request) {
+  return handleLlmRoute(request, async ({ llm, body }) => {
+    const message = textField(body.message, 8000);
+    if (!message) throw new LlmError("invalid_request", "Message is empty.", 400);
+    const systemPrompt = textField(body.systemPrompt, 4000);
 
-export async function POST(request: NextRequest) {
-  try {
-    const { message, systemPrompt, stream } = await request.json();
-
-    const messages = [];
-    if (systemPrompt) {
-      messages.push({ role: "system", content: systemPrompt });
-    }
+    const messages: ChatMessage[] = [];
+    if (systemPrompt) messages.push({ role: "system", content: systemPrompt });
     messages.push({ role: "user", content: message });
 
-    const body = {
-      model: MIMO_MODEL,
-      messages,
-      temperature: 0.7,
-      max_tokens: 2048,
-      stream: !!stream,
-    };
-
-    const response = await fetch(`${MIMO_ENDPOINT}/chat/completions`, {
-      method: "POST",
-      headers: {
-        "api-key": MIMO_API_KEY,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(body),
-    });
-
-    if (!response.ok) {
-      return NextResponse.json(
-        { error: `MiMo API error: ${response.status}` },
-        { status: response.status },
-      );
-    }
-
-    if (stream && response.body) {
-      return new Response(response.body, {
+    if (body.stream === true) {
+      const stream = await chatCompletionStream(llm, messages, { temperature: 0.7, maxTokens: 2048, timeoutMs: 120_000 });
+      return new Response(stream, {
         headers: {
           "Content-Type": "text/event-stream",
-          "Cache-Control": "no-cache",
+          "Cache-Control": "no-cache, no-transform",
           Connection: "keep-alive",
         },
       });
     }
 
-    const data = await response.json();
-    const choice = data.choices?.[0];
-    const usage = data.usage || {};
-
-    return NextResponse.json({
-      content: choice?.message?.content || "",
-      reasoning_content: choice?.message?.reasoning_content || "",
-      model: data.model,
-      prompt_tokens: usage.prompt_tokens || 0,
-      completion_tokens: usage.completion_tokens || 0,
-      total_tokens: usage.total_tokens || 0,
-    });
-  } catch (error) {
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
-  }
+    const result = await chatCompletion(llm, messages, { temperature: 0.7, maxTokens: 2048 });
+    return NextResponse.json(result);
+  });
 }

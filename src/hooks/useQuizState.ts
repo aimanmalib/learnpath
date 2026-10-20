@@ -1,31 +1,35 @@
 "use client";
-import { useCallback } from "react";
-import { useQuizStore } from "@/store/quiz-store";
-import { useMiMo } from "./useMiMo";
+import { useCallback, useState } from "react";
+import { useQuizStore, type QuizQuestion } from "@/store/quiz-store";
+import { ApiError, postJson } from "@/lib/api-client";
 
 export function useQuizState() {
   const store = useQuizStore();
-  const mimo = useMiMo();
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generationError, setGenerationError] = useState<ApiError | null>(null);
+  const [tokensUsed, setTokensUsed] = useState(0);
 
   const generateQuiz = useCallback(
     async (topic: string, count: number = 5, difficulty: "easy" | "medium" | "hard" = "medium") => {
-      const systemPrompt = `You are a quiz generator. Generate ${count} multiple-choice questions about ${topic} at ${difficulty} difficulty. Return JSON array: [{"id":"q1","question":"...","options":["a","b","c","d"],"correctIndex":0,"explanation":"...","difficulty":"${difficulty}"}]`;
-
-      await mimo.sendMessage(`Generate a quiz about: ${topic}`, systemPrompt);
-
-      if (mimo.response) {
-        try {
-          const jsonMatch = mimo.response.match(/\[\s*\{[\s\S]*\}\s*\]/);
-          if (jsonMatch) {
-            const questions = JSON.parse(jsonMatch[0]);
-            store.setQuestions(questions, topic);
-          }
-        } catch {
-          // JSON parse failed
-        }
+      setIsGenerating(true);
+      setGenerationError(null);
+      try {
+        const data = await postJson<{ questions: QuizQuestion[]; tokens_used?: number }>("/api/quiz", {
+          topic,
+          count,
+          difficulty,
+        });
+        setTokensUsed(data.tokens_used || 0);
+        store.setQuestions(data.questions, topic);
+      } catch (err) {
+        setGenerationError(
+          err instanceof ApiError ? err : new ApiError("unknown", "Something went wrong. Please try again.", 0),
+        );
+      } finally {
+        setIsGenerating(false);
       }
     },
-    [mimo, store],
+    [store],
   );
 
   const answerAndNext = useCallback(
@@ -40,7 +44,8 @@ export function useQuizState() {
     ...store,
     generateQuiz,
     answerAndNext,
-    isGenerating: mimo.isLoading,
-    generationError: mimo.error,
+    isGenerating,
+    generationError,
+    tokensUsed,
   };
 }

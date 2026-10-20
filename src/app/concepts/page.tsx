@@ -12,11 +12,11 @@ const sampleConcepts = [
 
 export default function ConceptsPage() {
   return (
-    <main className="min-h-screen p-8 max-w-4xl mx-auto">
+    <main className="min-h-[70vh] px-4 py-6 sm:p-8 max-w-4xl mx-auto">
       <h1 className="text-3xl font-bold mb-6">🧠 Concept Map</h1>
       <ConceptMap concepts={sampleConcepts} title="Programming Fundamentals" />
-      <p className="text-sm text-gray-400 mt-4 text-center">
-        Concepts auto-generated from your study sessions using MiMo
+      <p className="text-sm text-gray-500 mt-4 text-center">
+        Sample data. The concept map is a static demo and is not generated from your sessions yet.
       </p>
     </main>
   );

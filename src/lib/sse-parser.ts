@@ -1,5 +1,5 @@
 /**
- * SSE (Server-Sent Events) stream parser for MiMo API responses.
+ * SSE (Server-Sent Events) stream parser for OpenAI-compatible streaming responses.
  * Handles the 'reasoning_content' field (used by some providers for chain-of-thought).
  */
 

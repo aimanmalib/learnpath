@@ -15,7 +15,7 @@ body:
     attributes:
       label: Steps to reproduce
       placeholder: |
-        1. Set LLM_PROVIDER to ...
+        1. In Settings, choose provider ... (or set LLM_PROVIDER to ...)
         2. Open /quiz and ...
         3. See error
     validations:
@@ -31,6 +31,6 @@ body:
     id: node
     attributes:
       label: Node version
-      placeholder: "20.x"
+      placeholder: "22.x (or \"live demo\")"
     validations:
       required: true

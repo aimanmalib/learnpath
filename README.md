@@ -9,7 +9,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-blue.svg)](https://www.typescriptlang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-**[Live demo →](https://learnpath-nine.vercel.app)** (bring your own API key: open **Settings**, pick a provider and paste a key)
+**Live demo:** being redeployed with this version (bring your own API key). Until then, the screenshots below show the current build, and you can [run it locally](#development).
 
 <table>
   <tr>
@@ -126,6 +126,8 @@ LLM_MODEL=llama3.1
 Requires Node.js 22.12 or newer.
 
 ```bash
+npm ci               # install
+npm run dev          # http://localhost:3000, then add your key in Settings
 npm test             # vitest
 npm run typecheck    # tsc --noEmit
 npm run lint         # eslint

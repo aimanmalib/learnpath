@@ -1,0 +1,12 @@
+cff-version: 1.2.0
+message: "If you use learnpath, please cite it as below."
+title: "LearnPath: quizzes, flashcards and learning roadmaps from any OpenAI-compatible LLM, in English and Bahasa Melayu"
+type: software
+authors:
+  - given-names: Muhammad
+    family-names: Aiman
+version: 1.1.0
+license: MIT
+repository-code: "https://github.com/aimanmalib/learnpath"
+abstract: >-
+  A Next.js learning app that generates quizzes, SM-2 spaced-repetition flashcards and step-by-step roadmaps with any OpenAI-compatible model, with a bilingual (Bahasa Melayu and English) interface and AI output in the chosen language.

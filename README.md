@@ -159,6 +159,16 @@ OpenAI-compatible provider (OpenAI, OpenRouter, Groq, DeepSeek, Together, Mistra
 - SM-2 spaced repetition
 - Vitest + Testing Library
 
+## How this was built
+
+learnpath was built with AI coding assistance (Claude Code) under the direction of its author, Muhammad Aiman.
+
+The evidence that it works is meant to be checkable:
+
+- The test suite, run with `npm test`.
+- CI on Node 22 and 24 for every pull request.
+- A live demo at https://learnpath-nine.vercel.app.
+
 ## Security
 
 See [SECURITY.md](SECURITY.md) to report a vulnerability privately.

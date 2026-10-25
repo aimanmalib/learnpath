@@ -180,3 +180,9 @@ See [SECURITY.md](SECURITY.md) to report a vulnerability privately.
 ---
 
 Built by [Sasa Teguh](https://sasateguh.com) · Malaysia
+
+## Work with Sasa Teguh
+
+I built this project. I run [Sasa Teguh](https://sasateguh.com), a studio in Malaysia that builds websites found on Google and in AI answers, and sets up systems like this one for businesses.
+
+[Book a call](https://sasateguh.com/book) · hello@sasateguh.com · [More from Sasa Teguh](https://github.com/sasateguh)

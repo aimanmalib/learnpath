@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-labelledby="t">
+  <title id="t">LearnPath</title>
+  <defs>
+    <linearGradient id="rim" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity=".16"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="tile" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1c1f26"/>
+      <stop offset="1" stop-color="#121418"/>
+    </linearGradient>
+  </defs>
+  <!-- ink tile shared with MyPII and Codr: the same open-source family -->
+  <rect x="16" y="16" width="224" height="224" rx="56" fill="url(#tile)"/>
+  <rect x="17" y="17" width="222" height="222" rx="55" fill="none" stroke="url(#rim)" stroke-width="2"/>
+  <!-- mark: a dotted learning path from where you start (white) to the goal (amber) -->
+  <circle cx="70" cy="182" r="16" fill="#f4f4f1"/>
+  <circle cx="103" cy="174" r="7" fill="#f4f4f1"/>
+  <circle cx="118" cy="158" r="7" fill="#f4f4f1"/>
+  <circle cx="128" cy="138" r="7" fill="#f4f4f1"/>
+  <circle cx="137" cy="117" r="7" fill="#f4f4f1"/>
+  <circle cx="149" cy="99" r="7" fill="#f4f4f1"/>
+  <circle cx="186" cy="86" r="22" fill="#e8b04a"/>
+</svg>

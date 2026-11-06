@@ -1,32 +1,27 @@
-# LearnPath
+<p align="center"><img src="https://raw.githubusercontent.com/aimanmalib/learnpath/main/brand/logo-512.png" width="112" height="112" alt="LearnPath"></p>
 
-**Quizzes, flashcards and learning roadmaps from any OpenAI-compatible LLM, in English and Bahasa Melayu**
+<h1 align="center">LearnPath</h1>
 
-> AI-generated quizzes, flashcards and learning roadmaps, with spaced repetition and a simple progress view. In English and Bahasa Melayu.
+<p align="center"><a href="https://github.com/aimanmalib/learnpath/actions/workflows/ci.yml"><img src="https://github.com/aimanmalib/learnpath/actions/workflows/ci.yml/badge.svg" alt="CI"></a> <a href="https://nextjs.org/"><img src="https://img.shields.io/badge/Next.js-16-black.svg" alt="Next.js 16"></a> <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5-blue.svg" alt="TypeScript"></a> <a href="https://github.com/aimanmalib/learnpath/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a></p>
 
-[![CI](https://github.com/aimanmalib/learnpath/actions/workflows/ci.yml/badge.svg)](https://github.com/aimanmalib/learnpath/actions/workflows/ci.yml)
-[![Next.js 16](https://img.shields.io/badge/Next.js-16-black.svg)](https://nextjs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5-blue.svg)](https://www.typescriptlang.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+<p align="center"><b>Quizzes, flashcards and learning roadmaps from any OpenAI-compatible LLM, in English and Bahasa Melayu.</b> · <i>Kuiz, kad imbas dan peta laluan pembelajaran daripada mana-mana LLM yang serasi OpenAI, dalam bahasa Inggeris dan Bahasa Melayu.</i><br>
+<a href="https://learnpath-nine.vercel.app">live demo</a> · Built in Malaysia by <a href="https://aimanmalib.com">Aiman Malib</a></p>
 
-**[Live demo →](https://learnpath-nine.vercel.app)** (bring your own API key: open **Settings**, pick a provider and paste a key; it stays in your browser)
+LearnPath generates quizzes, flashcards and learning roadmaps for any topic, with SM-2 spaced repetition and a simple progress view. Every AI feature goes through one provider layer (`src/lib/llm/`) that speaks the OpenAI `/chat/completions` protocol. Choose a built-in provider in the browser and bring your own key, or configure the server once with environment variables when you host it yourself. Every screen is in English or Bahasa Melayu. The [live demo](https://learnpath-nine.vercel.app) uses your own API key: open **Settings**, pick a provider and paste a key; it stays in your browser.
+
+[Bahasa Melayu ↓](#bahasa-melayu)
 
 <table>
   <tr>
-    <td width="60%"><img src="docs/screenshots/home-bm-light.png" alt="LearnPath home page in Bahasa Melayu, light theme"></td>
-    <td width="40%"><img src="docs/screenshots/quiz-bm-iphone.png" alt="A quiz question in Bahasa Melayu on iPhone"></td>
+    <td width="60%"><img src="https://raw.githubusercontent.com/aimanmalib/learnpath/main/docs/screenshots/home-bm-light.png" alt="LearnPath home page in Bahasa Melayu, light theme"></td>
+    <td width="40%"><img src="https://raw.githubusercontent.com/aimanmalib/learnpath/main/docs/screenshots/quiz-bm-iphone.png" alt="A quiz question in Bahasa Melayu on iPhone"></td>
   </tr>
   <tr>
-    <td><img src="docs/screenshots/roadmap-en-dark.png" alt="A five-step learning roadmap in English, dark theme"></td>
-    <td><img src="docs/screenshots/flashcard-bm-iphone-dark.png" alt="A flashcard answer in Bahasa Melayu on iPhone, dark theme"></td>
+    <td><img src="https://raw.githubusercontent.com/aimanmalib/learnpath/main/docs/screenshots/roadmap-en-dark.png" alt="A five-step learning roadmap in English, dark theme"></td>
+    <td><img src="https://raw.githubusercontent.com/aimanmalib/learnpath/main/docs/screenshots/flashcard-bm-iphone-dark.png" alt="A flashcard answer in Bahasa Melayu on iPhone, dark theme"></td>
   </tr>
 </table>
 <sub>Screenshots taken in Safari/WebKit (desktop and iPhone 13). The quiz, roadmap and flashcard text is real model output.</sub>
-
-
-Every AI feature goes through one provider layer (`src/lib/llm/`) that speaks the OpenAI `/chat/completions` protocol. Choose a built-in provider in the browser, or configure the server once with environment variables when you host it yourself.
-
----
 
 ## Features
 
@@ -52,7 +47,7 @@ There are also two API-only routes with no page yet: `POST /api/chat` (single me
 
 The public demo has no server-side key. Each visitor uses their own:
 
-1. Click **Settings** (**Tetapan** in BM, the key icon on phones) in the top bar.
+1. Click **Settings** (the key icon on phones) in the top bar.
 2. Pick a provider, keep the suggested model or type another, and paste your API key.
 3. Press **Save**. **Forget key** removes it again.
 
@@ -171,11 +166,38 @@ The evidence that it works is meant to be checkable:
 
 ## Security
 
-See [SECURITY.md](SECURITY.md) to report a vulnerability privately.
+See [SECURITY.md](https://github.com/aimanmalib/learnpath/blob/main/SECURITY.md) to report a vulnerability privately.
 
-## License
+## Bahasa Melayu
 
-[MIT](LICENSE) © 2026 Muhammad Aiman
+LearnPath menjana kuiz, kad imbas dan peta laluan pembelajaran untuk apa-apa topik, dengan ulangan berjarak SM-2 dan paparan kemajuan yang ringkas. Setiap ciri AI melalui satu lapisan penyedia (`src/lib/llm/`) yang memakai protokol `/chat/completions` OpenAI, jadi ia berfungsi dengan mana-mana LLM yang serasi OpenAI. Setiap skrin ada dalam Bahasa Melayu dan bahasa Inggeris (tukar di bar atas), dan AI menjawab dalam bahasa yang sedang anda baca.
+
+**Ciri utama:**
+- **Kuiz:** soalan aneka pilihan untuk apa-apa topik pada tahap kesukaran pilihan anda (mudah / sederhana / sukar), dengan penerangan selepas setiap jawapan.
+- **Kad imbas:** set kad untuk satu topik, dengan jadual ulang kaji ikut algoritma ulangan berjarak SM-2.
+- **Peta laluan pembelajaran:** pelan langkah demi langkah pada peringkat permulaan / pertengahan / lanjutan.
+- **Kemajuan:** sesi, markah dan penggunaan token bagi lawatan semasa (dalam memori sahaja, tidak disimpan).
+- **Peta konsep:** peta contoh yang statik (belum dijana oleh LLM).
+- **Tema cerah dan gelap** ikut tetapan peranti, boleh ditukar dengan butang bulan/matahari.
+
+Semua teks antara muka berada dalam `src/i18n/messages/en.ts` dan `ms.ts`. Ujian gagal jika satu kunci wujud dalam satu bahasa sahaja, jika pemegang tempat berbeza, atau jika fail BM mengandungi perkataan Indonesia yang biasa (`karena`, `harus`, `kirim`, ...). Untuk BM, pelayan meminta model menulis dengan ejaan standard Malaysia (Dewan Bahasa dan Pustaka); hasilnya bergantung pada model yang anda pilih.
+
+**Cara guna demo (kunci API anda sendiri).** Demo awam tiada kunci di pelayan. Buka [demo](https://learnpath-nine.vercel.app), tekan **Tetapan** (ikon kunci pada telefon), pilih penyedia, kekalkan model cadangan atau taip model lain, tampal kunci API dan tekan **Simpan**. Kunci disimpan dalam pelayar anda sahaja (`localStorage`) dan dihantar bersama setiap permintaan ke laluan API aplikasi ini, yang meneruskannya kepada penyedia pilihan anda. Pelayan tidak menyimpan atau melog kunci itu, dan hanya meneruskan ke URL asas penyedia terbina dalam. Guna kunci yang ada had perbelanjaan, dan tekan **Lupakan kunci** pada peranti yang dikongsi.
+
+**Hos sendiri.** Perlu Node.js 22.12 atau lebih baharu.
+
+```bash
+git clone https://github.com/aimanmalib/learnpath.git
+cd learnpath
+npm install
+npm run dev          # http://localhost:3000
+```
+
+Tanpa pemboleh ubah persekitaran, aplikasi berjalan dalam mod kunci sendiri seperti demo. Untuk memberi satu kunci pelayan kepada semua pelawat salinan anda, cipta `.env.local` dengan `LLM_PROVIDER` dan `LLM_API_KEY`. Senarai penuh pemboleh ubah dan penyedia ada dalam [Self-hosting](#self-hosting) dan [Supported providers](#supported-providers) di atas.
+
+## Licence
+
+[MIT](https://github.com/aimanmalib/learnpath/blob/main/LICENSE) © 2026 Muhammad Aiman
 
 ---
 

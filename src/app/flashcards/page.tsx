@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { GalleryVerticalEnd, RotateCcw } from "lucide-react";
+import { ExportDeckButton } from "@/components/ExportDeckButton";
 import { FlashCard } from "@/components/FlashCard";
 import { ErrorNotice } from "@/components/ErrorNotice";
 import { GeneratingState } from "@/components/GeneratingState";
@@ -135,6 +136,9 @@ export default function FlashcardsPage() {
               </div>
             )}
           </div>
+          <div className="mt-2 flex justify-center">
+            <ExportDeckButton cards={store.cards} topic={store.topic} />
+          </div>
         </div>
       )}
 
@@ -155,6 +159,7 @@ export default function FlashcardsPage() {
               <RotateCcw className="h-4 w-4" aria-hidden="true" />
               {t("flashcards.reviewAgain")}
             </button>
+            <ExportDeckButton cards={store.cards} topic={store.topic} className="btn btn-secondary" />
             <button type="button" onClick={newTopic} className="btn btn-primary">
               {t("common.newTopic")}
             </button>

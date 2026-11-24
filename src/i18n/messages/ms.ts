@@ -138,6 +138,8 @@ export const ms: Messages = {
     completeTitle: "Set kad selesai diulang kaji",
     completeDesc: "Anda telah mengulang kaji {total} kad tentang {topic}.",
     reviewAgain: "Ulang kaji semula",
+    exportCsv: "Muat turun CSV",
+    exportCsvLabel: "Muat turun CSV: {total} kad untuk Anki",
   },
   roadmap: {
     title: "Peta laluan pembelajaran",

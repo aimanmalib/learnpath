@@ -5,3 +5,13 @@ out/
 .env.local
 *.tsbuildinfo
 next-env.d.ts
+
+# Local working notes (kept outside the public repo)
+/NEXT.md
+/02-DECISIONS.md
+/CLAUDE.md
+/CLAUDE.local.md
+/.claude/
+/PELAN-*.md
+/PASTE-*.md
+/.autopilot/

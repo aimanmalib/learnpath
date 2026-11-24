@@ -138,6 +138,8 @@ export const en = {
     completeTitle: "Deck reviewed",
     completeDesc: "You reviewed {total} cards on {topic}.",
     reviewAgain: "Review again",
+    exportCsv: "Download CSV",
+    exportCsvLabel: "Download CSV: {total} cards for Anki",
   },
   roadmap: {
     title: "Learning roadmap",
